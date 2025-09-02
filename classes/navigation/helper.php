@@ -22,7 +22,7 @@ class helper {
         if ($courses) {
             foreach ($courses as $c) {
                 $results[] = [
-                    'name' => "Course: " . $c->fullname,
+                    'name' => $c->fullname,
                     'url'  => new \moodle_url('/course/view.php', ['id' => $c->id])
                 ];
             }
