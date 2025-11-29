@@ -1,13 +1,24 @@
-define(['jquery', 'core/templates'], function($, Templates) {
+// amd/src/chatbot.js
+define([
+    'jquery',
+    'core/templates',
+    'local_automation/chat_assistant',
+    'local_automation/chat_qb',
+    'local_automation/chat_quiz'
+], function($, Templates, Assistant, QB, Quiz) {
     'use strict';
 
     const STORAGE_PREFIX = 'ai_chat_history_';
     let currentMode = 'assistant'; // Default mode
 
-    // For course creation flow
-    let pendingCoursePayload = null;      // holds last course params returned by assistant
-    let awaitingConfirmation = false;     // true when a confirmation bubble is shown
+    // Mode-specific handlers (only assistant for now)
+    const handlers = {
+        assistant: Assistant,
+        qb: QB,
+        quiz: Quiz
+    };
 
+    // ===== History helpers =====
     function getStorageKey() {
         return STORAGE_PREFIX + currentMode;
     }
@@ -16,7 +27,9 @@ define(['jquery', 'core/templates'], function($, Templates) {
         $('#chatbot-messages').empty();
 
         let history = localStorage.getItem(getStorageKey());
-        if (!history) return;
+        if (!history) {
+            return;
+        }
         history = JSON.parse(history);
 
         history.forEach(msg => appendMessage(msg.text, msg.sender, false));
@@ -30,11 +43,14 @@ define(['jquery', 'core/templates'], function($, Templates) {
         localStorage.setItem(getStorageKey(), JSON.stringify(history));
     }
 
+    // ===== UI helpers =====
     function appendMessage(text, sender, store = true) {
         const className = sender === 'user' ? 'msg-user' : 'msg-bot';
         $('#chatbot-messages').append(`<div class="message ${className}">${text}</div>`);
 
-        if (store) saveMessage(text, sender);
+        if (store) {
+            saveMessage(text, sender);
+        }
         scrollMessagesToBottom();
     }
 
@@ -43,124 +59,6 @@ define(['jquery', 'core/templates'], function($, Templates) {
         if (msgBox) {
             msgBox.scrollTo({ top: msgBox.scrollHeight, behavior: 'smooth' });
         }
-    }
-    // Renders automation JSON responses (assistant mode)
-    function renderAutomationMessage(data) {
-        // missing params -> list them and ask the user to provide
-        if (data.type === 'course_creation_missing_params') {
-            const missing = data.missing || [];
-            appendMessage(`<div><b>Missing parameters:</b> ${missing.join(', ')}</div>`, 'bot');
-            // clear any pending flow (user must provide missing details)
-            pendingCoursePayload = null;
-            awaitingConfirmation = false;
-            return;
-        }
-
-        if (data.type === 'course_creation'|| data.type === 'course_update') {
-            const params = data.params || {};
-            const category = params.category || 1;
-
-            // numsections from model (preferred), fallback to sections length
-            let numsections = parseInt(params.numsections, 10);
-            if (isNaN(numsections) || numsections <= 0) {
-                numsections = Array.isArray(params.sections) ? params.sections.length : 0;
-            }
-
-            const rawSections = Array.isArray(params.sections) ? params.sections : [];
-            let sections = rawSections.map((s, idx) => {
-                if (typeof s === 'string') {
-                    return s;
-                }
-                if (s && typeof s === 'object') {
-                    // If Groq returns { "name": "Graphs" } or { "title": "Graphs" }
-                    return s.name || s.title || ('Section ' + (idx + 1));
-                }
-                return 'Section ' + (idx + 1);
-            });
-
-            // If LLM returned fewer section names than numsections, pad the rest
-            if (numsections > sections.length) {
-                const start = sections.length;
-                for (let i = start; i < numsections; i++) {
-                    sections.push('Section ' + (i + 1));
-                }
-            }
-        
-            // If numsections somehow smaller, trim to be safe
-            if (numsections > 0 && sections.length > numsections) {
-                sections = sections.slice(0, numsections);
-            }
-
-            let shortname = params.shortname || '';
-            if (!shortname && params.fullname) {
-                shortname = params.fullname.replace(/\s+/g, '').toUpperCase().slice(0, 15);
-            }
-
-
-            // store pending payload
-            pendingCoursePayload = {
-                fullname: params.fullname || '',
-                shortname: params.shortname || '',
-                category: category,
-                sections: sections
-            };
-            awaitingConfirmation = true;
-        
-            // show preview bubble
-            const html = `
-                <div class="automation-box">
-                    <b>Course Preview</b><br>
-                    Fullname: ${escapeHtml(pendingCoursePayload.fullname)}<br>
-                    Shortname: ${escapeHtml(pendingCoursePayload.shortname)}<br>
-                    Category: ${escapeHtml(pendingCoursePayload.category)}<br>
-                    Sections: ${escapeHtml(pendingCoursePayload.sections.join(', '))}<br>
-                </div>
-            `;
-            appendMessage(html, 'bot');
-        
-            // show confirm button *below chat* using action-area
-            showConfirmButton(function() {
-                console.log("JS DEBUG: Sending request to:", M.cfg.wwwroot + '/local/automation/course_ajax.php');
-                console.log("JS DEBUG: Payload being sent:", {
-                    ...pendingCoursePayload,
-                    sesskey: M.cfg.sesskey
-                });
-            
-                // send to backend
-                $.ajax({
-                    url: M.cfg.wwwroot + '/local/automation/course_ajax.php',
-                    method: 'POST',
-                    data: JSON.stringify({
-                        ...pendingCoursePayload,
-                        sesskey: M.cfg.sesskey
-                    }),
-                    contentType: "application/json",
-                    dataType: "json",
-                    success: function(res) {
-                        console.log("Server response:", res);
-                        if (res && res.success) {
-                            appendMessage(`✅ Course created! ID: ${res.courseid}`, 'bot');
-                            pendingCoursePayload = null;
-                            awaitingConfirmation = false;
-                            clearConfirmButton();
-                        } else {
-                            appendMessage('❌ Error: ' + (res.error || 'Unknown error'), 'bot');
-                        }
-                    },
-                    error: function(xhr) {
-                        appendMessage('❌ Failed to create course. See server logs.', 'bot');
-                        console.error("AJAX error:", xhr);
-                    }
-                });
-            
-            });
-        
-            scrollMessagesToBottom();
-            return;
-        }
-
-        // Unknown automation type -> just show raw JSON
-        appendMessage(`<pre>${escapeHtml(JSON.stringify(data, null, 2))}</pre>`, 'bot');
     }
 
     // helper to escape HTML to avoid XSS with user-editable data
@@ -174,7 +72,7 @@ define(['jquery', 'core/templates'], function($, Templates) {
             .replace(/'/g, '&#039;');
     }
 
-    // Show confirm button only for automation confirmation
+    // ===== Confirm button area (used by assistant handler) =====
     function showConfirmButton(onConfirm) {
         const area = $('#chatbot-action-area');
 
@@ -190,34 +88,22 @@ define(['jquery', 'core/templates'], function($, Templates) {
         $('#chatbot-action-area').empty();
     }
 
+    // ===== Core send logic =====
     function handleSend() {
         const input = $('#chatbot-input');
         const text = input.val().trim();
-        if (!text) return;
+        if (!text) {
+            return;
+        }
 
-        appendMessage(text, 'user');
+        appendMessage(escapeHtml(text), 'user');
         input.val('');
 
-        // If we are awaiting confirmation (a pending course preview exists),
-        // treat the user's message as an edit instruction.
+        // Allow mode-specific handler to transform the prompt (e.g., assistant edit flow)
         let promptToSend = text;
-        if (pendingCoursePayload && awaitingConfirmation) {
-            const wrapper = [
-                "You are updating an existing COURSE CREATION JSON.",
-                "Strict rules:",
-                "- You MUST respond with a single JSON object, no explanations.",
-                "- \"type\" MUST be exactly \"course_creation\" (do NOT invent new types).",
-                "- Preserve existing fields unless the user explicitly changes them.",
-                "- Keep the same number of sections (same array length).",
-                "- Only modify the specific sections or fields the user mentions.",
-                "",
-                "PREVIOUS_PARAMS:",
-                JSON.stringify(pendingCoursePayload),
-                "",
-                "USER_EDIT:",
-                text
-            ].join('\n');
-            promptToSend = wrapper;
+        const handler = handlers[currentMode];
+        if (handler && typeof handler.beforeSend === 'function') {
+            promptToSend = handler.beforeSend(text);
         }
 
         $.ajax({
@@ -229,15 +115,24 @@ define(['jquery', 'core/templates'], function($, Templates) {
                 sesskey: M.cfg.sesskey
             },
             success: function(res) {
-                // If assistant returned structured automation
-                if (res.automation && res.data) {
-                    renderAutomationMessage(res.data);
-                    return;
+                // Give mode handler a first chance to process structured automation responses
+                const handler = handlers[currentMode];
+                if (handler && typeof handler.handleResponse === 'function') {
+                    const consumed = handler.handleResponse(res, {
+                        appendMessage,
+                        scrollMessagesToBottom,
+                        showConfirmButton,
+                        clearConfirmButton,
+                        escapeHtml
+                    });
+
+                    if (consumed) {
+                        return;
+                    }
                 }
 
-                // Otherwise handle plain text
+                // Fallback plain-text handling (for qb / quiz / generic assistant replies)
                 if (res.reply) {
-                    // preserve line breaks
                     const formattedReply = res.reply.replace(/\n/g, '<br>');
                     appendMessage(formattedReply, 'bot');
                 } else {
@@ -251,9 +146,17 @@ define(['jquery', 'core/templates'], function($, Templates) {
         });
     }
 
-
+    // ===== Tab switching =====
     function handleTabSwitch(newMode) {
-        if (newMode === currentMode) return;
+        if (newMode === currentMode) {
+            return;
+        }
+
+        // Reset previous mode handler (if any state)
+        const oldHandler = handlers[currentMode];
+        if (oldHandler && typeof oldHandler.reset === 'function') {
+            oldHandler.reset();
+        }
 
         currentMode = newMode;
         console.log(`Switched to mode: ${currentMode}`);
@@ -270,14 +173,11 @@ define(['jquery', 'core/templates'], function($, Templates) {
         }[currentMode];
         $('.chat-header span').text(headerText);
 
-        pendingCoursePayload = null;
-        awaitingConfirmation = false;
-
         clearConfirmButton();
-
         loadHistory();
     }
 
+    // ===== Event binding =====
     function bindEvents() {
         $('#ai-chatbot-button').on('click', () => {
             $('#ai-chatbot-modal').toggleClass('hidden');
@@ -303,18 +203,23 @@ define(['jquery', 'core/templates'], function($, Templates) {
         });
     }
 
+    // ===== Init =====
     function init() {
         if (!document.getElementById('chatbot-style')) {
-            $('head').append('<link id="chatbot-style" rel="stylesheet" href="'+M.cfg.wwwroot+'/local/automation/style/chatbot.css">');
+            $('head').append(
+                '<link id="chatbot-style" rel="stylesheet" href="' +
+                M.cfg.wwwroot +
+                '/local/automation/style/chatbot.css">'
+            );
         }
-        
+
         Templates.render('local_automation/chatbot', {})
             .then(html => {
                 $('body').append(html);
                 bindEvents();
                 loadHistory();
             })
-            .catch(err => console.error("Chatbot template load failed:", err));
+            .catch(err => console.error('Chatbot template load failed:', err));
     }
 
     return { init: init };
