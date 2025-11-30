@@ -113,6 +113,24 @@ define([
             return;
         }
 
+        if (currentMode === 'quiz' && handlers.quiz && typeof handlers.quiz.generate === 'function') {
+            const instructions = text;
+
+            if (instructions) {
+                appendMessage(escapeHtml(instructions), 'user');
+            }
+        
+            input.val('');
+            handlers.quiz.generate(text, {
+                appendMessage,
+                scrollMessagesToBottom,
+                showConfirmButton,
+                clearConfirmButton,
+                escapeHtml
+            });
+            return;
+        }
+
         if (!text) {
             return;
         }
