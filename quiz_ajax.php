@@ -16,6 +16,9 @@ use PhpOffice\PhpPresentation\IOFactory as PptIOFactory;
 
 require_once($CFG->dirroot . '/course/lib.php');
 require_once($CFG->libdir . '/filelib.php');
+require_once($CFG->libdir . '/questionlib.php');
+require_once($CFG->dirroot . '/mod/quiz/lib.php');
+require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
 require_login();
 
@@ -156,6 +159,164 @@ function local_automation_quiz_extract_text_from_file(\stored_file $file): strin
 }
 
 /**
+ * Create a multichoice question in the course question bank
+ * and add it as a slot in the given quiz.
+ *
+ * @param stdClass       $quiz    Quiz record (must have ->id set).
+ * @param context_course $context Course context (we store questions at course level).
+ * @param array          $q       One element from $decoded['questions'].
+ * @param float          $marks   Max mark for this question in the quiz.
+ * @return int                    Created question id.
+ */
+function local_automation_quiz_create_mcq_and_add_to_quiz(
+    stdClass $quiz,
+    context_course $context,
+    array $q,
+    float $marks
+): int {
+    global $USER, $DB;
+
+    // ============================
+    // 1) Get or create category
+    // ============================
+
+    // Try Moodle helper first (may return false in your setup).
+    $cat = question_get_default_category($context->id);
+
+    if (!$cat || empty($cat->id)) {
+        // Try to find any existing category for this context.
+        $cat = $DB->get_record(
+            'question_categories',
+            ['contextid' => $context->id],
+            '*',
+            IGNORE_MULTIPLE
+        );
+    }
+
+    // Still nothing? Create a simple default category manually.
+    if (!$cat || empty($cat->id)) {
+        $newcat = new stdClass();
+        $newcat->name        = 'Default for course ' . $context->instanceid;
+        $newcat->contextid   = $context->id;
+        $newcat->info        = '';
+        $newcat->infoformat  = FORMAT_HTML;
+        $newcat->parent      = 0;
+        $newcat->sortorder   = 999;
+        $newcat->stamp       = make_unique_id_code();
+        $newcat->idnumber    = null;
+
+        $newcat->id = $DB->insert_record('question_categories', $newcat);
+        $cat = $newcat;
+    }
+
+    $categoryid        = $cat->id;
+    $categorycontextid = $cat->contextid ?? $context->id;
+
+    // ============================
+    // 2) Build $fromform (same shape as the edit form)
+    // ============================
+
+    $fromform = new stdClass();
+
+    // "category" is "categoryid,contextid" in form data.
+    $fromform->category = $categoryid . ',' . $categorycontextid;
+
+    $fromform->name  = mb_substr($q['questiontext'], 0, 250);
+    $fromform->qtype = 'multichoice';
+
+    // questiontext is an EDITOR field in real forms.
+    $fromform->questiontext = [
+        'text'   => $q['questiontext'],
+        'format' => FORMAT_HTML,
+        'itemid' => 0,
+    ];
+
+    // generalfeedback is also an EDITOR.
+    $fromform->generalfeedback = [
+        'text'   => $q['feedback'] ?? '',
+        'format' => FORMAT_HTML,
+        'itemid' => 0,
+    ];
+
+    $fromform->defaultmark = $marks;
+    $fromform->penalty     = 0.3333333;
+
+    // Make sure questions are not left as DRAFT, otherwise attempts explode.
+    $fromform->status = 'ready';
+
+
+    // Multichoice-specific fields.
+    $fromform->single          = 1;
+    $fromform->shuffleanswers  = 1;
+    $fromform->answernumbering = 'abc';
+    $fromform->shownumcorrect  = 0;
+
+    // These 3 are EDITOR fields too.
+    $fromform->correctfeedback = [
+        'text'   => '',
+        'format' => FORMAT_HTML,
+        'itemid' => 0,
+    ];
+    $fromform->partiallycorrectfeedback = [
+        'text'   => '',
+        'format' => FORMAT_HTML,
+        'itemid' => 0,
+    ];
+    $fromform->incorrectfeedback = [
+        'text'   => '',
+        'format' => FORMAT_HTML,
+        'itemid' => 0,
+    ];
+
+    // Answers: in the edit form, these are EDITOR fields.
+    $fromform->answer   = [];
+    $fromform->fraction = [];
+    $fromform->feedback = [];
+
+    $correctindex = (int)($q['correct_index'] ?? 0);
+
+    foreach ($q['options'] as $idx => $opttext) {
+        $fromform->answer[$idx] = [
+            'text'   => $opttext,
+            'format' => FORMAT_HTML,
+            'itemid' => 0,
+        ];
+        $fromform->fraction[$idx] = ($idx === $correctindex) ? 1.0 : 0.0;
+        $fromform->feedback[$idx] = [
+            'text'   => '',
+            'format' => FORMAT_HTML,
+            'itemid' => 0,
+        ];
+    }
+
+    // ============================
+    // 3) Question skeleton + save via question API
+    // ============================
+
+    $question = new stdClass();
+    $question->id         = 0; // new
+    $question->category   = $categoryid;
+    $question->qtype      = 'multichoice';
+    $question->createdby  = $USER->id;
+    $question->modifiedby = $USER->id;
+
+    $qtype         = question_bank::get_qtype('multichoice');
+    // Official signature: save_question($questionfromdb, $formdata)
+    $savedquestion = $qtype->save_question($question, $fromform);
+    $questionid    = $savedquestion->id;
+
+    // ============================
+    // 4) Attach to quiz
+    // ============================
+    quiz_add_quiz_question($questionid, $quiz, 1, $marks);
+
+    return $questionid;
+}
+
+
+
+
+/**
  * Call Groq using curl (same style as chatbot_endpoint.php).
  */
 function local_automation_quiz_call_groq(string $systemPrompt, string $userPrompt): array {
@@ -276,7 +437,10 @@ if ($action === 'upload') {
 
     $sectionnum = (int)$sectionrec->section;
 
-    // ===== 1) Insert into mdl_quiz directly =====
+    // =============================
+    // 1) Insert quiz row manually
+    // (this was your last STABLE version)
+    // =============================
     $now  = time();
     $quiz = new stdClass();
     $quiz->course      = $courseid;
@@ -284,23 +448,29 @@ if ($action === 'upload') {
     $quiz->intro       = '';
     $quiz->introformat = FORMAT_HTML;
 
-    // Access control
-    $quiz->password    = '';  // IMPORTANT: NOT NULL
+    // Access control – MUST NOT be null.
+    $quiz->password = '';
 
-    // Timing / behaviour / grades
-    $quiz->timeopen    = 0;
-    $quiz->timeclose   = 0;
-    $quiz->timelimit   = $timelimitminutes > 0 ? $timelimitminutes * 60 : 0;
-    $quiz->overduehandling    = 'autoabandon';
-    $quiz->graceperiod        = 0;
+    // Timing / behaviour / grades.
+    $quiz->timeopen          = 0;
+    $quiz->timeclose         = 0;
+    $quiz->timelimit         = $timelimitminutes > 0 ? $timelimitminutes * 60 : 0;
+    $quiz->overduehandling   = 'autoabandon';
+    $quiz->graceperiod       = 0;
     $quiz->preferredbehaviour = 'deferredfeedback';
-    $quiz->attempts           = 0;
-    $quiz->shuffleanswers     = 1;
-    $quiz->shufflequestions   = 0;
-    $quiz->grade              = count($questions) * $marksperquestion;
-    $quiz->sumgrades          = 0;
+    $quiz->attempts          = 0;  // unlimited
+    $quiz->shuffleanswers    = 1;
+    $quiz->shufflequestions  = 0;
 
-    // Review options – set to safe default (no review after attempt)
+    // Layout: all questions on one page, free navigation.
+    $quiz->questionsperpage = 0;   // 0 = all on one page in recent Moodle.
+    $quiz->navmethod        = 'free';
+
+    // Grade settings — sumgrades will be recomputed later.
+    $quiz->grade     = count($questions) * $marksperquestion;
+    $quiz->sumgrades = 0;
+
+    // Review options – safe “off” defaults.
     $quiz->reviewattempt          = 0;
     $quiz->reviewcorrectness      = 0;
     $quiz->reviewmaxmarks         = 0;
@@ -313,38 +483,89 @@ if ($action === 'upload') {
     $quiz->timecreated  = $now;
     $quiz->timemodified = $now;
 
-    // Insert quiz row
-    $quizid = $DB->insert_record('quiz', $quiz);
+    // Insert quiz row.
+    $quizid   = $DB->insert_record('quiz', $quiz);
+    $quiz->id = $quizid; // IMPORTANT for quiz_add_quiz_question / quiz_update_sumgrades
 
-    // ===== 2) Create course module for this quiz =====
-    // Get module id for 'quiz'
+    // =============================
+    // 2) Create course module and put it in the section
+    // (exactly like your working version)
+    // =============================
     $moduleid = $DB->get_field('modules', 'id', ['name' => 'quiz'], MUST_EXIST);
 
     require_once($CFG->dirroot . '/course/lib.php');
 
     $cm = new stdClass();
-    $cm->course      = $courseid;
-    $cm->module      = $moduleid;
-    $cm->instance    = $quizid;
-    $cm->section     = $sectionnum;
-    $cm->visible     = 1;
+    $cm->course              = $courseid;
+    $cm->module              = $moduleid;
+    $cm->instance            = $quizid;
+    $cm->section             = $sectionnum;
+    $cm->visible             = 1;
     $cm->visibleoncoursepage = 1;
+
     $cmid = add_course_module($cm);
-
-    // Put it into the section
     course_add_cm_to_section($courseid, $cmid, $sectionnum);
-
-    // Rebuild cache
     rebuild_course_cache($courseid, true);
 
-    // Build URLs
+    // =============================
+    // 3) Create questions and attach them to this quiz
+    // =============================
+        // ===== 2) Create each MCQ and add it to the quiz =====
+    $createdcount = 0;
+
+    foreach ($questions as $q) {
+        // Basic validation.
+        if (!is_array($q)) {
+            continue;
+        }
+        if (empty($q['questiontext'])) {
+            continue;
+        }
+        if (empty($q['options']) || !is_array($q['options'])) {
+            continue;
+        }
+        // Ensure exactly 4 options (our generator contract).
+        if (count($q['options']) !== 4) {
+            continue;
+        }
+
+        local_automation_quiz_create_mcq_and_add_to_quiz(
+            $quiz,
+            $context,
+            $q,
+            $marksperquestion
+        );
+
+        $createdcount++;
+    }
+
+    // If at least one question was created, fix sumgrades/grade.
+    if ($createdcount > 0) {
+        $quiz->sumgrades = $createdcount * $marksperquestion;
+        $quiz->grade     = $quiz->sumgrades;
+        $DB->update_record('quiz', $quiz);
+
+        // Recalculate quiz total marks.
+        quiz_update_sumgrades($quiz);
+
+        // Make sure the quiz has a valid page layout (all questions on one page).
+        if (function_exists('quiz_repaginate_questions')) {
+            // 0 = all questions on a single page.
+            quiz_repaginate_questions($quiz->id, 0);
+        }
+    }
+
+
+    // =============================
+    // 4) Build URLs and respond
+    // =============================
     $editurl     = (new moodle_url('/mod/quiz/edit.php', ['cmid' => $cmid]))->out(false);
     $settingsurl = (new moodle_url('/course/modedit.php', ['update' => $cmid, 'return' => 1]))->out(false);
     $viewurl     = (new moodle_url('/mod/quiz/view.php', ['id' => $cmid]))->out(false);
 
     echo json_encode([
         'success'      => true,
-        'message'      => 'Quiz created successfully. You can now edit questions and settings.',
+        'message'      => 'Quiz created successfully. Questions were added automatically. You can now edit questions and settings.',
         'courseid'     => $courseid,
         'sectionid'    => $sectionid,
         'cmid'         => $cmid,
@@ -352,9 +573,11 @@ if ($action === 'upload') {
         'editurl'      => $editurl,
         'settingsurl'  => $settingsurl,
         'viewurl'      => $viewurl,
+        'createdcount' => $createdcount,
     ]);
     exit;
 }
+
 else if ($action !== 'generate') {
     local_automation_quiz_error('Unknown action: ' . $action);
 }
