@@ -1,0 +1,6 @@
+# Python virtual environments
+rag/venv/
+
+
+# Environment variables
+/rag/.env
