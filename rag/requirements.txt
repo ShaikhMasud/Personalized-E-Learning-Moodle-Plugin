@@ -1,0 +1,8 @@
+pypdf
+sentence-transformers
+faiss-cpu
+groq
+python-dotenv
+pillow
+pytesseract
+pdf2image

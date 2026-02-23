@@ -1,0 +1,1026 @@
+{
+  "UNIT 1": {
+    "1.1": {
+      "title": "Introduction to Uncertainty in AI",
+      "keywords": [
+        "uncertainty",
+        "decision making",
+        "partial truth",
+        "AI uncertainty"
+      ]
+    },
+    "1.2": {
+      "title": "Reasons for Uncertainty",
+      "keywords": [
+        "partially observable environment",
+        "dynamic environment",
+        "incomplete knowledge",
+        "inaccessible areas"
+      ]
+    },
+    "1.3": {
+      "title": "Taxonomy of Uncertainty",
+      "keywords": [
+        "objective uncertainty",
+        "subjective uncertainty",
+        "epistemological uncertainty",
+        "ontological uncertainty",
+        "moral uncertainty",
+        "rule uncertainty"
+      ]
+    },
+    "1.4": {
+      "title": "Methods to Handle Uncertainty",
+      "keywords": [
+        "fuzzy logic",
+        "probabilistic reasoning",
+        "hidden markov models",
+        "neural networks"
+      ]
+    },
+    "1.5": {
+      "title": "Probabilistic Reasoning",
+      "keywords": [
+        "probability",
+        "uncertainty handling",
+        "knowledge representation",
+        "gambling calculus"
+      ]
+    },
+    "1.6": {
+      "title": "Probability and Axioms",
+      "keywords": [
+        "probability definition",
+        "sample space",
+        "axioms of probability",
+        "conditional probability",
+        "joint probability"
+      ]
+    },
+    "1.7": {
+      "title": "Inference Using Full Joint Distributions",
+      "keywords": [
+        "probabilistic inference",
+        "full joint distribution",
+        "marginalization",
+        "conditioning",
+        "normalization constant"
+      ]
+    },
+    "1.8": {
+      "title": "Bayes Theorem",
+      "keywords": [
+        "bayes theorem",
+        "prior probability",
+        "posterior probability",
+        "likelihood",
+        "bayes rule"
+      ]
+    },
+    "1.9": {
+      "title": "Bayesian Networks",
+      "keywords": [
+        "bayesian networks",
+        "directed acyclic graph",
+        "conditional independence",
+        "belief networks",
+        "judea pearl"
+      ]
+    },
+    "1.10": {
+      "title": "Inference in Bayesian Networks",
+      "keywords": [
+        "bayesian inference",
+        "belief networks",
+        "NP-hard inference",
+        "probability computation"
+      ]
+    },
+    "1.11": {
+      "title": "Decision Theory and Markov Decision Processes",
+      "keywords": [
+        "decision theory",
+        "markov decision process",
+        "states",
+        "actions",
+        "rewards",
+        "policy"
+      ]
+    },
+    "1.12": {
+      "title": "Self-Learning Topics",
+      "keywords": [
+        "hidden markov model",
+        "gaussian mixture model",
+        "HMM",
+        "GMM"
+      ]
+    }
+  },
+  "UNIT 2": {
+    "2.1": {
+      "title": "Introduction to Cognitive Computing",
+      "keywords": [
+        "cognitive computing",
+        "human thought simulation",
+        "ambiguous decision making",
+        "unstructured data",
+        "context analysis"
+      ]
+    },
+    "2.2": {
+      "title": "Foundations of Cognitive Computing",
+      "keywords": [
+        "learning systems",
+        "hypothesis generation",
+        "evidence based reasoning",
+        "pattern discovery",
+        "natural language processing"
+      ]
+    },
+    "2.3": {
+      "title": "Core Principles of Cognitive Systems",
+      "keywords": [
+        "learning from experience",
+        "model creation",
+        "probabilistic reasoning",
+        "continuous learning",
+        "hypothesis scoring"
+      ]
+    },
+    "2.4": {
+      "title": "Applications of Cognitive Computing",
+      "keywords": [
+        "healthcare analytics",
+        "smart cities",
+        "traffic rerouting",
+        "weather analysis",
+        "crime detection"
+      ]
+    },
+    "2.5": {
+      "title": "Driving Factors for Cognitive Systems",
+      "keywords": [
+        "unstructured data growth",
+        "multimedia data",
+        "cloud computing",
+        "storage scalability",
+        "collaborative research"
+      ]
+    },
+    "2.6": {
+      "title": "Design Principles for Cognitive Systems",
+      "keywords": [
+        "data optimization",
+        "feature extraction",
+        "analytics experimentation",
+        "hypothesis validation",
+        "visualization services"
+      ]
+    },
+    "2.7": {
+      "title": "Data Management in Cognitive Systems",
+      "keywords": [
+        "dynamic data",
+        "data security",
+        "data integration",
+        "ontology based integration",
+        "data aggregation"
+      ]
+    },
+    "2.8": {
+      "title": "Feature Identification, Abstraction and Extraction",
+      "keywords": [
+        "feature identification",
+        "feature abstraction",
+        "feature extraction",
+        "deep learning",
+        "machine learning support"
+      ]
+    },
+    "2.9": {
+      "title": "Applying Analytics in Cognitive Computing",
+      "keywords": [
+        "descriptive analytics",
+        "predictive analytics",
+        "prescriptive analytics",
+        "regression analysis",
+        "decision making"
+      ]
+    },
+    "2.10": {
+      "title": "Continuous Learning Using Machine Learning",
+      "keywords": [
+        "machine learning",
+        "inferential statistics",
+        "supervised learning",
+        "unsupervised learning",
+        "pattern recognition"
+      ]
+    },
+    "2.11": {
+      "title": "Hypothesis Generation and Scoring",
+      "keywords": [
+        "hypothesis formulation",
+        "cause effect relationship",
+        "evidence scoring",
+        "confidence evaluation",
+        "feedback driven learning"
+      ]
+    },
+    "2.12": {
+      "title": "Presentation and Visualization Infrastructure",
+      "keywords": [
+        "result visualization",
+        "report generation",
+        "distributed systems",
+        "parallel computing",
+        "decision support"
+      ]
+    },
+    "2.13": {
+      "title": "Natural Language Processing in Cognitive Systems",
+      "keywords": [
+        "natural language processing",
+        "tokenization",
+        "syntactic analysis",
+        "semantic analysis",
+        "hidden markov models"
+      ]
+    },
+    "2.14": {
+      "title": "Knowledge Representation Using Taxonomies and Ontologies",
+      "keywords": [
+        "taxonomy",
+        "ontology",
+        "knowledge representation",
+        "class hierarchy",
+        "semantic relationships"
+      ]
+    },
+    "2.15": {
+      "title": "Applying Advanced Analytics to Cognitive Computing",
+      "keywords": [
+        "advanced analytics",
+        "machine learning models",
+        "neural networks",
+        "text analytics",
+        "anomaly detection"
+      ]
+    },
+    "2.16": {
+      "title": "Process of Building a Cognitive Application",
+      "keywords": [
+        "problem definition",
+        "domain identification",
+        "data acquisition",
+        "corpus creation",
+        "training and testing"
+      ]
+    },
+    "2.17": {
+      "title": "Self-Learning Topics",
+      "keywords": [
+        "IBM Watson",
+        "enterprise cognitive systems",
+        "real world cognitive applications"
+      ]
+    }
+  },
+  "UNIT 3": {
+    "3.1": {
+      "title": "Introduction to Fuzzy Logic",
+      "keywords": [
+        "fuzzy logic",
+        "vagueness",
+        "ambiguity",
+        "partial truth",
+        "lotfi zadeh"
+      ]
+    },
+    "3.2": {
+      "title": "Classical Sets vs Fuzzy Sets",
+      "keywords": [
+        "classical sets",
+        "crisp boundaries",
+        "binary membership",
+        "fuzzy boundaries",
+        "degree of membership"
+      ]
+    },
+    "3.3": {
+      "title": "Fuzzy Set Theory",
+      "keywords": [
+        "fuzzy set theory",
+        "membership function",
+        "universe of discourse",
+        "ordered pairs",
+        "generalization of classical sets"
+      ]
+    },
+    "3.4": {
+      "title": "Fuzzy Sets Representation",
+      "keywords": [
+        "set representation",
+        "membership values",
+        "discrete representation",
+        "alternative representation"
+      ]
+    },
+    "3.5": {
+      "title": "Properties of Fuzzy Sets",
+      "keywords": [
+        "commutativity",
+        "associativity",
+        "distributive laws",
+        "identity laws",
+        "idempotent laws"
+      ]
+    },
+    "3.6": {
+      "title": "Operations on Fuzzy Sets",
+      "keywords": [
+        "union",
+        "intersection",
+        "complement",
+        "max operator",
+        "min operator"
+      ]
+    },
+    "3.7": {
+      "title": "Fuzzy Membership Functions",
+      "keywords": [
+        "membership function",
+        "degree of membership",
+        "triangular function",
+        "gaussian function",
+        "s-function"
+      ]
+    },
+    "3.8": {
+      "title": "Types of Fuzzy Membership Functions",
+      "keywords": [
+        "triangular membership function",
+        "trapezoidal membership function",
+        "gaussian membership function",
+        "sigmoid function"
+      ]
+    },
+    "3.9": {
+      "title": "Architecture of a Fuzzy Logic System",
+      "keywords": [
+        "fuzzification",
+        "inference engine",
+        "rule base",
+        "defuzzification",
+        "fuzzy logic architecture"
+      ]
+    },
+    "3.10": {
+      "title": "Advantages and Disadvantages of Fuzzy Logic",
+      "keywords": [
+        "robust systems",
+        "uncertainty handling",
+        "rule complexity",
+        "accuracy issues",
+        "system tuning"
+      ]
+    },
+    "3.11": {
+      "title": "Fuzzy Relations",
+      "keywords": [
+        "fuzzy relations",
+        "crisp relations",
+        "relation matrices",
+        "degree of relationship"
+      ]
+    },
+    "3.12": {
+      "title": "Operations on Fuzzy Relations",
+      "keywords": [
+        "union of relations",
+        "intersection of relations",
+        "complement of relations",
+        "max-min operations"
+      ]
+    },
+    "3.13": {
+      "title": "Fuzzy Composition",
+      "keywords": [
+        "fuzzy composition",
+        "max-min composition",
+        "max-product composition",
+        "relation mapping"
+      ]
+    },
+    "3.14": {
+      "title": "Fuzzy Inference System",
+      "keywords": [
+        "fuzzy inference",
+        "rule evaluation",
+        "if-then rules",
+        "inference process"
+      ]
+    },
+    "3.15": {
+      "title": "Defuzzification Methods",
+      "keywords": [
+        "defuzzification",
+        "mean of maxima",
+        "centroid method",
+        "crisp output"
+      ]
+    },
+    "3.16": {
+      "title": "Mamdani Type Fuzzy Control System",
+      "keywords": [
+        "mamdani controller",
+        "fuzzy control system",
+        "rule base design",
+        "control architecture"
+      ]
+    },
+    "3.17": {
+      "title": "Design of Fuzzy Controllers",
+      "keywords": [
+        "washing machine controller",
+        "domestic shower controller",
+        "water purifier controller",
+        "control rules"
+      ]
+    },
+    "3.18": {
+      "title": "Applications of Fuzzy Logic",
+      "keywords": [
+        "automobile systems",
+        "medical diagnosis",
+        "industrial control",
+        "consumer electronics",
+        "decision support systems"
+      ]
+    },
+    "3.19": {
+      "title": "Self-Learning Topics",
+      "keywords": [
+        "fuzzy inference system",
+        "ANFIS",
+        "advanced fuzzy composition",
+        "adaptive fuzzy systems"
+      ]
+    }
+  },
+  "UNIT 4": {
+    "4.1": {
+      "title": "Introduction to Deep Learning",
+      "keywords": [
+        "deep learning",
+        "artificial intelligence",
+        "machine learning subset",
+        "unstructured data",
+        "neural networks"
+      ]
+    },
+    "4.2": {
+      "title": "Artificial Neural Network (ANN)",
+      "keywords": [
+        "artificial neural network",
+        "neurons",
+        "weights",
+        "bias",
+        "biological inspiration"
+      ]
+    },
+    "4.3": {
+      "title": "Architecture of Artificial Neural Network",
+      "keywords": [
+        "input layer",
+        "hidden layer",
+        "output layer",
+        "ANN architecture",
+        "feedforward computation"
+      ]
+    },
+    "4.4": {
+      "title": "Working of ANN",
+      "keywords": [
+        "weighted sum",
+        "activation function",
+        "bias addition",
+        "forward propagation",
+        "error calculation"
+      ]
+    },
+    "4.5": {
+      "title": "Activation Functions",
+      "keywords": [
+        "activation function",
+        "non-linearity",
+        "binary step",
+        "linear activation",
+        "sigmoid",
+        "tanh",
+        "relu",
+        "softmax"
+      ]
+    },
+    "4.6": {
+      "title": "Vanishing and Exploding Gradients",
+      "keywords": [
+        "vanishing gradient",
+        "exploding gradient",
+        "deep networks",
+        "training instability",
+        "gradient descent issues"
+      ]
+    },
+    "4.7": {
+      "title": "Types of Neural Networks",
+      "keywords": [
+        "feed forward neural network",
+        "feedback neural network",
+        "multilayer feedforward",
+        "recurrent neural network"
+      ]
+    },
+    "4.8": {
+      "title": "Applications of Artificial Neural Networks",
+      "keywords": [
+        "image processing",
+        "speech recognition",
+        "pattern recognition",
+        "healthcare",
+        "fraud detection",
+        "forecasting"
+      ]
+    },
+    "4.9": {
+      "title": "Machine Learning vs Deep Learning",
+      "keywords": [
+        "machine learning",
+        "deep learning",
+        "feature engineering",
+        "training data size",
+        "accuracy comparison"
+      ]
+    },
+    "4.10": {
+      "title": "Working of Deep Learning",
+      "keywords": [
+        "deep neural networks",
+        "multiple hidden layers",
+        "hierarchical feature learning",
+        "image recognition",
+        "speech recognition"
+      ]
+    },
+    "4.11": {
+      "title": "Recurrent Neural Network (RNN)",
+      "keywords": [
+        "recurrent neural network",
+        "sequence data",
+        "internal memory",
+        "time series",
+        "backpropagation through time"
+      ]
+    },
+    "4.12": {
+      "title": "Types of RNN",
+      "keywords": [
+        "one to one",
+        "one to many",
+        "many to one",
+        "many to many",
+        "sequence modeling"
+      ]
+    },
+    "4.13": {
+      "title": "Long Short-Term Memory (LSTM)",
+      "keywords": [
+        "LSTM",
+        "long term dependency",
+        "input gate",
+        "forget gate",
+        "output gate",
+        "vanishing gradient solution"
+      ]
+    },
+    "4.14": {
+      "title": "Deep Recurrent Neural Network",
+      "keywords": [
+        "deep RNN",
+        "stacked RNN layers",
+        "speech recognition",
+        "machine translation",
+        "handwriting recognition"
+      ]
+    },
+    "4.15": {
+      "title": "Convolutional Neural Network (CNN)",
+      "keywords": [
+        "convolutional neural network",
+        "feature extraction",
+        "image classification",
+        "spatial hierarchy",
+        "filters"
+      ]
+    },
+    "4.16": {
+      "title": "Components of CNN Architecture",
+      "keywords": [
+        "convolution layer",
+        "kernel",
+        "stride",
+        "padding",
+        "relu",
+        "pooling",
+        "flatten layer"
+      ]
+    },
+    "4.17": {
+      "title": "Pooling Techniques",
+      "keywords": [
+        "max pooling",
+        "average pooling",
+        "dimensionality reduction",
+        "feature maps"
+      ]
+    },
+    "4.18": {
+      "title": "Properties and Advantages of CNN",
+      "keywords": [
+        "local connectivity",
+        "parameter sharing",
+        "translation invariance",
+        "efficient computation"
+      ]
+    },
+    "4.19": {
+      "title": "Applications of CNN",
+      "keywords": [
+        "image recognition",
+        "face detection",
+        "object detection",
+        "handwritten digit recognition",
+        "medical imaging"
+      ]
+    },
+    "4.20": {
+      "title": "Autoencoder",
+      "keywords": [
+        "autoencoder",
+        "dimensionality reduction",
+        "feature learning",
+        "unsupervised learning"
+      ]
+    },
+    "4.21": {
+      "title": "Self-Learning Topics",
+      "keywords": [
+        "restricted boltzmann machine",
+        "RBM",
+        "deep belief networks"
+      ]
+    }
+  },
+  "UNIT 5": {
+    "5.1": {
+      "title": "Introduction to Ensemble Learning",
+      "keywords": [
+        "ensemble learning",
+        "weak learners",
+        "model aggregation",
+        "classification improvement",
+        "robust models"
+      ]
+    },
+    "5.2": {
+      "title": "Bias, Variance and Bias-Variance Tradeoff",
+      "keywords": [
+        "bias",
+        "variance",
+        "underfitting",
+        "overfitting",
+        "bias variance tradeoff"
+      ]
+    },
+    "5.3": {
+      "title": "Why Ensemble Methods Work",
+      "keywords": [
+        "statistical problem",
+        "computational problem",
+        "representational problem",
+        "model robustness"
+      ]
+    },
+    "5.4": {
+      "title": "Types of Ensemble Methods",
+      "keywords": [
+        "bagging",
+        "boosting",
+        "stacking",
+        "blending",
+        "random forest"
+      ]
+    },
+    "5.5": {
+      "title": "Bagging (Bootstrap Aggregating)",
+      "keywords": [
+        "bagging",
+        "bootstrap sampling",
+        "variance reduction",
+        "random forest",
+        "parallel learning"
+      ]
+    },
+    "5.6": {
+      "title": "Boosting Techniques",
+      "keywords": [
+        "boosting",
+        "adaptive boosting",
+        "gradient boosting",
+        "weak classifiers",
+        "bias reduction"
+      ]
+    },
+    "5.7": {
+      "title": "AdaBoost Algorithm",
+      "keywords": [
+        "adaboost",
+        "weighted classifiers",
+        "misclassification focus",
+        "iterative learning"
+      ]
+    },
+    "5.8": {
+      "title": "Gradient Boosting",
+      "keywords": [
+        "gradient boosting",
+        "loss minimization",
+        "decision trees",
+        "sequential learning"
+      ]
+    },
+    "5.9": {
+      "title": "XGBoost",
+      "keywords": [
+        "xgboost",
+        "extreme gradient boosting",
+        "parallel processing",
+        "tree pruning",
+        "high performance"
+      ]
+    },
+    "5.10": {
+      "title": "Stacking and Multi-Level Stacking",
+      "keywords": [
+        "stacking",
+        "meta learners",
+        "heterogeneous models",
+        "multi level stacking"
+      ]
+    },
+    "5.11": {
+      "title": "Class Imbalance Problem",
+      "keywords": [
+        "class imbalance",
+        "minority class",
+        "majority class",
+        "biased classifiers"
+      ]
+    },
+    "5.12": {
+      "title": "Handling Imbalanced Data",
+      "keywords": [
+        "resampling techniques",
+        "undersampling",
+        "oversampling",
+        "data preprocessing"
+      ]
+    },
+    "5.13": {
+      "title": "Under-Sampling Techniques",
+      "keywords": [
+        "random undersampling",
+        "nearmiss",
+        "tomek links",
+        "majority class reduction"
+      ]
+    },
+    "5.14": {
+      "title": "Over-Sampling Techniques",
+      "keywords": [
+        "random oversampling",
+        "smote",
+        "msmote",
+        "synthetic data generation"
+      ]
+    },
+    "5.15": {
+      "title": "SMOTE Algorithm",
+      "keywords": [
+        "smote",
+        "synthetic minority oversampling",
+        "imbalanced learn",
+        "data augmentation"
+      ]
+    },
+    "5.16": {
+      "title": "Model Evaluation Metrics",
+      "keywords": [
+        "confusion matrix",
+        "accuracy",
+        "precision",
+        "recall",
+        "f-score",
+        "specificity",
+        "sensitivity"
+      ]
+    },
+    "5.17": {
+      "title": "Validation Techniques",
+      "keywords": [
+        "holdout method",
+        "cross validation",
+        "random subsampling",
+        "bootstrap"
+      ]
+    },
+    "5.18": {
+      "title": "ROC Curve and Cost-Benefit Analysis",
+      "keywords": [
+        "roc curve",
+        "auc",
+        "classifier comparison",
+        "cost benefit analysis"
+      ]
+    },
+    "5.19": {
+      "title": "Approach to Ensemble-Based Methodologies",
+      "keywords": [
+        "ensemble workflow",
+        "classifier combination",
+        "prediction aggregation"
+      ]
+    },
+    "5.20": {
+      "title": "Self-Learning Topics",
+      "keywords": [
+        "machine learning revision",
+        "advanced ensemble methods",
+        "imbalanced classification techniques"
+      ]
+    }
+  },
+  "UNIT 6": {
+    "6.1": {
+      "title": "Introduction to Data Science Applications",
+      "keywords": [
+        "data science",
+        "real world applications",
+        "industry use cases",
+        "case studies"
+      ]
+    },
+    "6.2": {
+      "title": "Data Science in E-Commerce",
+      "keywords": [
+        "recommendation systems",
+        "customer behavior analysis",
+        "sentiment analysis",
+        "dynamic pricing",
+        "user personalization"
+      ]
+    },
+    "6.3": {
+      "title": "Data Science in Healthcare",
+      "keywords": [
+        "disease prediction",
+        "personalized medicine",
+        "genomics",
+        "medical image analysis",
+        "drug discovery"
+      ]
+    },
+    "6.4": {
+      "title": "Data Science in Energy Industry",
+      "keywords": [
+        "energy optimization",
+        "demand supply management",
+        "predictive maintenance",
+        "resource utilization",
+        "risk prevention"
+      ]
+    },
+    "6.5": {
+      "title": "Data Science in Travel Industry",
+      "keywords": [
+        "personalized travel services",
+        "sentiment analysis",
+        "route optimization",
+        "cost optimization",
+        "customer segmentation"
+      ]
+    },
+    "6.6": {
+      "title": "Data Science in Finance",
+      "keywords": [
+        "market prediction",
+        "fraud detection",
+        "financial analytics",
+        "customer relationship management"
+      ]
+    },
+    "6.7": {
+      "title": "Data Science in Gaming",
+      "keywords": [
+        "player behavior analysis",
+        "game engagement",
+        "game monetization",
+        "graphics optimization",
+        "user experience"
+      ]
+    },
+    "6.8": {
+      "title": "Text Data Science Applications",
+      "keywords": [
+        "text analytics",
+        "natural language processing",
+        "sentiment analysis",
+        "emotion detection"
+      ]
+    },
+    "6.9": {
+      "title": "Image Data Science Applications",
+      "keywords": [
+        "image processing",
+        "image classification",
+        "medical imaging",
+        "computer vision"
+      ]
+    },
+    "6.10": {
+      "title": "Video Data Science Applications",
+      "keywords": [
+        "video analytics",
+        "surveillance",
+        "motion analysis",
+        "content understanding"
+      ]
+    },
+    "6.11": {
+      "title": "Audio Data Science Applications",
+      "keywords": [
+        "speech recognition",
+        "audio processing",
+        "voice assistants",
+        "sound classification"
+      ]
+    },
+    "6.12": {
+      "title": "Multimodal Data Science Applications",
+      "keywords": [
+        "multimodal learning",
+        "text image fusion",
+        "audio visual analysis",
+        "cross modal systems"
+      ]
+    },
+    "6.13": {
+      "title": "Data Science Case Studies",
+      "keywords": [
+        "transport for london",
+        "cancer prediction",
+        "real world analytics",
+        "large scale data"
+      ]
+    },
+    "6.14": {
+      "title": "Industry Case Studies",
+      "keywords": [
+        "amazon personalization",
+        "netflix recommendation",
+        "spotify analytics",
+        "supply chain optimization",
+        "banking analytics"
+      ]
+    },
+    "6.15": {
+      "title": "Advanced Data Science Case Studies",
+      "keywords": [
+        "text emotion detection",
+        "hotel recommendation system",
+        "customer personality analysis",
+        "music recommendation"
+      ]
+    },
+    "6.16": {
+      "title": "Self-Learning Topics",
+      "keywords": [
+        "imagenet",
+        "ilsvrc",
+        "large scale visual recognition",
+        "advanced data science trends"
+      ]
+    }
+  }
+}

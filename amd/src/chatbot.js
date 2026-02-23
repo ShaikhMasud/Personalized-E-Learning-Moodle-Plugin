@@ -4,18 +4,24 @@ define([
     'core/templates',
     'local_automation/chat_assistant',
     'local_automation/chat_qb',
-    'local_automation/chat_quiz'
-], function($, Templates, Assistant, QB, Quiz) {
+    'local_automation/chat_quiz',
+    'local_automation/chat_student'
+], function($, Templates, Assistant, QB, Quiz, Student) {
     'use strict';
 
     const STORAGE_PREFIX = 'ai_chat_history_';
     let currentMode = 'assistant'; // Default mode
 
+    // Page-level config passed from PHP (accessible to all functions)
+    let pageConfig = {};
+
     // Mode-specific handlers (only assistant for now)
     const handlers = {
-        assistant: Assistant,
-        qb: QB,
-        quiz: Quiz
+    assistant: Assistant,
+    qb: QB,
+    quiz: Quiz,
+    student: Student,
+    analytics: {}
     };
 
     // ===== History helpers =====
@@ -44,13 +50,52 @@ define([
     }
 
     // ===== UI helpers =====
-    function appendMessage(text, sender, store = true) {
-        const className = sender === 'user' ? 'msg-user' : 'msg-bot';
-        $('#chatbot-messages').append(`<div class="message ${className}">${text}</div>`);
+    function appendMessage(text, sender, timestamp, store = true) {
 
-        if (store) {
-            saveMessage(text, sender);
+            console.log("APPEND CALLED →", {
+            text,
+            sender,
+            timestamp,
+            type: typeof timestamp
+        });
+
+        if (!timestamp) {
+            console.warn("⚠️ TIMESTAMP IS INVALID:", timestamp);
         }
+
+        const dateObj = new Date(parseInt(timestamp) * 1000);
+        const time = dateObj.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        const dateString = dateObj.toDateString();
+    
+        const container = $('#chatbot-messages');
+    
+        const lastDate = container.data('last-date');
+    
+        // Add date separator if new day
+        if (lastDate !== dateString) {
+            container.append(`
+                <div class="chat-date-separator">
+                    ${dateString}
+                </div>
+            `);
+            container.data('last-date', dateString);
+        }
+    
+        const className = sender === 'user' ? 'msg-user' : 'msg-bot';
+    
+        const messageHtml = `
+            <div class="message ${className}">
+                <div class="message-text">${text}</div>
+                <div class="message-time">${time}</div>
+            </div>
+        `;
+    
+        container.append(messageHtml);
+    
         scrollMessagesToBottom();
     }
 
@@ -92,6 +137,47 @@ define([
     function handleSend() {
         const input = $('#chatbot-input');
         const text = input.val().trim();
+
+        if (currentMode === 'student') {
+            if (!text) return;
+
+            // appendMessage(escapeHtml(text), 'user', false);
+            input.val('');
+
+            Student.saveMessageToDB(text, 'user').then(() => {
+                if (typeof res === 'string') {
+                    res = JSON.parse(res);
+                }
+            
+                appendMessage(escapeHtml(text), 'user', parseInt(res.timecreated), false);
+            
+                Student.askRAG(text).then(function(res) {
+                
+                    if (res && res.ok && res.answer) {
+                        const reply = res.answer.replace(/\n/g, '<br>');
+                        // appendMessage(reply, 'bot', false);
+                        // Student.saveMessageToDB(res.answer, 'bot');
+                        Student.saveMessageToDB(res.answer, 'bot').then(function(botRes) {
+
+                            if (typeof botRes === 'string') {
+                                botRes = JSON.parse(botRes);
+                            }
+                        
+                            appendMessage(reply, 'bot', parseInt(botRes.timecreated), false);
+                        });
+                    } else {
+                        appendMessage('⚠️ Tutor failed to respond.', 'bot', false);
+                    }
+                
+                }).catch(function(err) {
+                    console.error(err);
+                    appendMessage('❌ AI service unavailable.', 'bot', false);
+                });
+            
+            });
+        
+            return;
+        }
         
         // QB mode uses its own endpoint (qb_ajax.php), not chatbot_endpoint.php
         if (currentMode === 'qb' && handlers.qb && typeof handlers.qb.generate === 'function') {
@@ -185,11 +271,94 @@ define([
         });
     }
 
+    //analytics helper
+    function loadStudentDetails(studentid) {
+        $('#chatbot-messages').html('<div>Loading details...</div>');
+
+        // First fetch quiz attempts
+        $.ajax({
+            url: M.cfg.wwwroot + '/local/automation/analytics_ajax.php',
+            method: 'POST',
+            data: {
+                action: 'get_student_quiz',
+                studentid: studentid,
+                courseid: pageConfig.currentcourseid,
+                sesskey: M.cfg.sesskey
+            },
+            success: function(quizzes) {
+
+                let html = '<h4>Quiz Attempts</h4>';
+
+                if (quizzes.length === 0) {
+                    html += '<div>No quiz attempts found.</div>';
+                } else {
+                    quizzes.forEach(q => {
+                        html += `
+                            <div>
+                                Score: ${q.score}/${q.total}
+                                | Difficulty: ${q.difficulty}
+                                | Topic: ${q.topic}
+                            </div>
+                        `;
+                    });
+                }
+
+                // Add Chat History section placeholder
+                html += `
+                    <h4 style="margin-top:20px;">Chat History</h4>
+                    <div id="analytics-chat-history"
+                         style="max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:10px;">
+                        Loading chat history...
+                    </div>
+                `;
+
+                $('#chatbot-messages').html(html);
+
+                // Now fetch chat history
+                fetchStudentChat(studentid);
+            }
+        });
+    }
+
+    function fetchStudentChat(studentid) {
+        $.ajax({
+            url: M.cfg.wwwroot + '/local/automation/analytics_ajax.php',
+            method: 'POST',
+            data: {
+                action: 'get_student_chat',
+                studentid: studentid,
+                courseid: pageConfig.currentcourseid,
+                sesskey: M.cfg.sesskey
+            },
+            success: function(messages) {
+
+                let chatHtml = '';
+
+                if (messages.length === 0) {
+                    chatHtml = '<div>No chat history found.</div>';
+                } else {
+                    messages.forEach(msg => {
+                        const senderLabel = msg.sender === 'user' ? 'Student' : 'AI';
+                        chatHtml += `
+                            <div style="margin-bottom:8px;">
+                                <strong>${senderLabel}:</strong>
+                                ${msg.message}
+                            </div>
+                        `;
+                    });
+                }
+
+                $('#analytics-chat-history').html(chatHtml);
+            }
+        });
+    }
+
     // ===== Tab switching =====
     function handleTabSwitch(newMode) {
         if (newMode === currentMode) {
             return;
         }
+        console.log("TAB SWITCH TO:", newMode);
 
         // Reset previous mode handler (if any state)
         const oldHandler = handlers[currentMode];
@@ -218,6 +387,50 @@ define([
             $input.attr('placeholder', 'Type preferences for this question bank (optional)…');
         } else if (currentMode === 'quiz') {
             $input.attr('placeholder', 'Describe the quiz you want to generate…');
+        } else if (currentMode === 'analytics') {
+            // hide input area for analytics mode
+            const $inputArea = $('.chat-input-area');
+            $inputArea.hide();
+            $input.attr('placeholder', ''); // no placeholder
+
+            // Load analytics content
+            $('#chatbot-messages').html('<div>Loading students...</div>');
+
+            $.ajax({
+                url: M.cfg.wwwroot + '/local/automation/analytics_ajax.php',
+                method: 'POST',
+                data: {
+                    action: 'get_students',
+                    courseid: pageConfig.currentcourseid,
+                    sesskey: M.cfg.sesskey
+                },
+                success: function(students) {
+                    let html = '<h4>Enrolled Students</h4>';
+                    students.forEach(s => {
+                        const name = escapeHtml((s.firstname || '') + ' ' + (s.lastname || ''));
+                        html += `
+                            <div class="analytics-student" data-studentid="${escapeHtml(String(s.id))}">
+                                ${name}
+                            </div>
+                        `;
+                    });
+
+                    $('#chatbot-messages').html(html);
+
+                    // delegated click handler (safer)
+                    $('#chatbot-messages').off('click', '.analytics-student');
+                    $('#chatbot-messages').on('click', '.analytics-student', function() {
+                        const studentid = $(this).data('studentid');
+                        loadStudentDetails(studentid);
+                    });
+                },
+                error: function(xhr) {
+                    $('#chatbot-messages').html('<div>Error fetching students.</div>');
+                }
+            });
+
+            clearConfirmButton();
+            return;
         } else {
             // Assistant default
             $input.attr('placeholder', 'Type your message…');
@@ -234,6 +447,13 @@ define([
 
     // ===== Event binding =====
     function bindEvents() {
+        // Unbind first to avoid duplicate handlers if init runs twice
+        $('#ai-chatbot-button').off('click');
+        $('#chatbot-close-btn').off('click');
+        $('#chatbot-send-btn').off('click');
+        $('#chatbot-input').off('input keypress');
+        $('.chat-tab').off('click');
+
         $('#ai-chatbot-button').on('click', () => {
             $('#ai-chatbot-modal').toggleClass('hidden');
             $('#chatbot-input').focus();
@@ -266,69 +486,123 @@ define([
         });
     }
 
-    // ===== Init =====
-    // function init() {
-    //     if (!document.getElementById('chatbot-style')) {
-    //         $('head').append(
-    //             '<link id="chatbot-style" rel="stylesheet" href="' +
-    //             M.cfg.wwwroot +
-    //             '/local/automation/style/chatbot.css">'
-    //         );
-    //     }
+    // Helper to set up the UI after template is present (idempotent)
+    function setupUIAndActivate() {
+        // ensure modal element exists; if not, render caller handles append
+        const $modal = $('#ai-chatbot-modal');
+        $modal.css({
+            width: '720px',
+            maxWidth: '90vw',
+            height: '80vh',
+            maxHeight: '80vh'
+        });
 
-    //     Templates.render('local_automation/chatbot', {})
-    //         .then(html => {
-    //             $('body').append(html);
-    //             bindEvents();
-    //             loadHistory();
-    //         })
-    //         .catch(err => console.error('Chatbot template load failed:', err));
-    // }
-    function init() {
-        if (!document.getElementById('chatbot-style')) {
-            $('head').append(
-                '<link id="chatbot-style" rel="stylesheet" href="' +
-                M.cfg.wwwroot +
-                '/local/automation/style/chatbot.css?v=qbui2">'
-            );
-        }
+        // Slightly smaller bubbles
+        $('#chatbot-messages').css({
+            fontSize: '0.85rem',
+            lineHeight: '1.4'
+        });
+        $('#chatbot-messages .message').css({
+            fontSize: '0.85rem',
+            lineHeight: '1.5',
+            padding: '6px 10px'
+        });
+        $('#chatbot-input').css({
+            fontSize: '0.85rem',
+            minHeight: '40px',
+            maxHeight: '150px',
+            resize: 'none'
+        });
 
-        Templates.render('local_automation/chatbot', {})
-            .then(html => {
-                $('body').append(html);
-
-                // 🔥 Force modal sizing so we can SEE it changed
-                const $modal = $('#ai-chatbot-modal');
-                $modal.css({
-                    width: '720px',
-                    maxWidth: '90vw',
-                    height: '80vh',
-                    maxHeight: '80vh'
-                });
-
-                // Slightly smaller bubbles
-                $('#chatbot-messages').css({
-                    fontSize: '0.85rem',
-                    lineHeight: '1.4'
-                });
-                $('#chatbot-messages .message').css({
-                    fontSize: '0.85rem',
-                    lineHeight: '1.5',
-                    padding: '6px 10px'
-                });
-                $('#chatbot-input').css({
-                    fontSize: '0.85rem',
-                    minHeight: '40px',
-                    maxHeight: '150px',
-                    resize: 'none'
-                });
-
-                bindEvents();
-                loadHistory();
-            })
-            .catch(err => console.error('Chatbot template load failed:', err));
+        bindEvents();
     }
 
+    // ===== Init =====
+    function init(cfg) {
+        // Backwards-compat: if called as init("student","21","21")
+        if (typeof cfg === 'string') {
+            // cfg is role string; build the config object from arguments
+            const role = cfg;
+            const currentcourseid = (typeof arguments[1] !== 'undefined') ? arguments[1] : 0;
+            const democourseid = (typeof arguments[2] !== 'undefined') ? arguments[2] : '';
+            cfg = {
+                role: role,
+                currentcourseid: parseInt(currentcourseid) || 0,
+                democourseid: String(democourseid)
+            };
+            console.warn('chatbot.init() called in legacy form — normalized config:', cfg);
+        }
+
+        console.trace('INIT TRACE');
+        console.log('INIT CALLED WITH:', cfg);
+
+        // Normalize and store page-level config (module scope)
+        pageConfig = cfg || {};
+        const config = pageConfig; // alias used inside init
+        console.log("CONFIG TYPE:", typeof config);
+        console.log("CONFIG VALUE:", config);
+
+        // only render template if it doesn't already exist
+        if (!document.getElementById('ai-chatbot-modal')) {
+            Templates.render('local_automation/chatbot', {})
+                .then(html => {
+                    $('body').append(html);
+                    setupUIAndActivate();
+                    activateModeAfterRender(config);
+                })
+                .catch(err => console.error('Chatbot template load failed:', err));
+        } else {
+            // already present in DOM — just set up UI and activate mode
+            setupUIAndActivate();
+            activateModeAfterRender(config);
+        }
+
+        console.log("SESSKEY:", M.cfg.sesskey);
+    }
+
+    // helper to pick student/teacher flow after template present
+    function activateModeAfterRender(config) {
+        // For safety, ensure Student knows config
+        if (config && config.role === 'student') {
+            console.log("INSIDE STUDENT BLOCK");
+
+            // If outside demo course → disable button
+            if (parseInt(config.currentcourseid) !== parseInt(config.democourseid)) {
+                $('#ai-chatbot-button').off('click');
+                return;
+            }
+
+            currentMode = 'student';
+            $('.chat-tabs').hide();
+            $('.chat-header span').text('AI Course Tutor');
+            $('#chatbot-input').attr('placeholder', 'Ask about this course…');
+
+            Student.initConfig(config);
+
+            $('#chatbot-action-area').html(
+                '<button id="take-mini-quiz-btn">Take Mini Quiz</button>'
+            );
+
+            // open full quiz page for now
+            $('#take-mini-quiz-btn').off('click').on('click', function() {
+                window.location.href =
+                    M.cfg.wwwroot + '/local/automation/student_quiz.php?courseid=' + config.currentcourseid;
+            });
+
+            // ensure history messages are escaped before appending
+            // Student.loadHistory(function(text, sender, timestamp) {
+            //     appendMessage(escapeHtml(text), sender, parseInt(timestamp), false);
+            // });
+            Student.loadHistory(appendMessage);
+
+        } else {
+            // Teacher → use localStorage history
+            $('.chat-tabs').show();
+            $('.chat-header span').text('AI Assistant');
+            currentMode = 'assistant';
+            loadHistory();
+        }
+    }
 
     return { init: init };
 });

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/automation/db" VERSION="2026022100" COMMENT="Student AI tables"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
+
+    <TABLES>
+
+        <!-- Student Chat History -->
+        <TABLE NAME="local_automation_student_chat" COMMENT="Stores student chatbot conversations">
+            <FIELDSS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+                <FIELD NAME="studentid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+                <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+                <FIELD NAME="message" TYPE="text" NOTNULL="true"/>
+                <FIELD NAME="sender" TYPE="char" LENGTH="10" NOTNULL="true"/>
+                <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+            </KEYS>
+            <INDEXES>
+                <INDEX NAME="studentid_idx" UNIQUE="false" FIELDS="studentid"/>
+                <INDEX NAME="courseid_idx" UNIQUE="false" FIELDS="courseid"/>
+            </INDEXES>
+        </TABLE>
+
+        <!-- Student Mini Quiz Attempts -->
+        <TABLE NAME="local_automation_student_quiz" COMMENT="Stores student mini quiz attempts">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+                <FIELD NAME="studentid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+                <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+                <FIELD NAME="topic" TYPE="char" LENGTH="255" NOTNULL="true"/>
+                <FIELD NAME="score" TYPE="int" LENGTH="5" NOTNULL="true"/>
+                <FIELD NAME="total" TYPE="int" LENGTH="5" NOTNULL="true"/>
+                <FIELD NAME="difficulty" TYPE="char" LENGTH="20" NOTNULL="true"/>
+                <FIELD NAME="recommendation" TYPE="text" NOTNULL="false"/>
+                <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+            </KEYS>
+            <INDEXES>
+                <INDEX NAME="studentid_idx2" UNIQUE="false" FIELDS="studentid"/>
+                <INDEX NAME="courseid_idx2" UNIQUE="false" FIELDS="courseid"/>
+            </INDEXES>
+        </TABLE>
+
+    </TABLES>
+</XMLDB>

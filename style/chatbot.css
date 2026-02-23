@@ -411,3 +411,25 @@
     font-size: 0.75rem;
     color: #555;
 }
+
+.message {
+    position: relative;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 10px;
+    max-width: 75%;
+}
+
+.message-time {
+    font-size: 0.5rem;
+    color: #888;
+    text-align: right;
+    margin-top: 4px;
+}
+
+.chat-date-separator {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #666;
+    margin: 15px 0;
+}

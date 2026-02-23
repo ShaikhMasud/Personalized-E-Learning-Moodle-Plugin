@@ -26,5 +26,14 @@ if ($hassiteconfig) { // needs admin access
         PARAM_ALPHANUMEXT
     ));
 
+    // Demo Course ID for Student AI
+    $settings->add(new admin_setting_configtext(
+        'local_automation/student_ai_courseid',
+        'Student AI Demo Course ID',
+        'Enter the course ID where the Student AI Tutor should be active.',
+        '',
+        PARAM_INT
+    ));
+
     $ADMIN->add('localplugins', $settings);
 }
