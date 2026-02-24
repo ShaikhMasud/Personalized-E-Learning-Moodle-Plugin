@@ -139,9 +139,14 @@ def ask_question(data: QuestionRequest):
         }
     ]
 
-    # Add previous chat
+   # Add previous chat properly formatted
     for msg in history:
-        messages.append(msg)
+        if "sender" in msg and "message" in msg:
+            role = "assistant" if msg["sender"] == "bot" else "user"
+            messages.append({
+                "role": role,
+                "content": msg["message"]
+            })
 
     # Add current question
     messages.append({
@@ -288,3 +293,60 @@ Course Material:
     except Exception as e:
         print("generate_quiz error:", e)
         return {"ok": False, "error": "Quiz generation failed."}
+
+
+# at top imports (if not already)
+from pydantic import BaseModel, Field
+
+# Add this model (can place near other Pydantic models)
+class RecommendRequest(BaseModel):
+    wrong_questions: List[str] = Field(default_factory=list)
+    selected_topics: Optional[Dict[str, List[str]]] = Field(default_factory=dict)
+    score: Optional[int] = None
+    total: Optional[int] = None
+
+# Add endpoint
+@app.post("/recommend-quiz")
+def recommend_quiz(payload: RecommendRequest):
+    # Build very short prompt focused on weakness
+    # Keep request compact (we only need wrong questions and topic ids)
+    wrong_qs = payload.wrong_questions or []
+    selected_topics = payload.selected_topics or {}
+    score = payload.score
+    total = payload.total
+
+    if len(wrong_qs) == 0:
+        return {"ok": True, "recommendation": "Good work — no incorrect answers to analyze."}
+
+    # Compose concise prompt
+    sample_prompt = (
+        "You are a helpful, concise tutor. Produce a 1–2 sentence recommendation (very short) "
+        "for a student who got these questions wrong. Focus on the likely weak concepts they need "
+        "to revise and one short next-step action they can take (e.g., review X section, try exercises). "
+        "Output only the recommendation (no preamble).\n\n"
+        f"Selected topics mapping (unit -> sections): {json.dumps(selected_topics)}\n\n"
+        f"Wrong question texts:\n"
+    )
+
+    for i, q in enumerate(wrong_qs, start=1):
+        sample_prompt += f"{i}. {q}\n"
+
+    # ask Groq
+    try:
+        resp = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": "You are a concise tutor producing a short recommendation."},
+                {"role": "user", "content": sample_prompt},
+            ],
+            temperature=0.2,
+            max_tokens=70  # enough for 1-2 short sentences
+        )
+        recommendation = resp.choices[0].message.content.strip()
+        # sanitize: if empty, fallback
+        if not recommendation:
+            recommendation = "Revise the related unit sections and practice the example problems."
+        return {"ok": True, "recommendation": recommendation}
+    except Exception as e:
+        print("recommend-quiz error:", e)
+        return {"ok": False, "error": "Recommendation generation failed."}

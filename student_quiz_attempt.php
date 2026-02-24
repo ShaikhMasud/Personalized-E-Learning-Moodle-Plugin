@@ -12,10 +12,16 @@ global $PAGE, $OUTPUT;
 $courseid = required_param('courseid', PARAM_INT);
 $total = required_param('totalquestions', PARAM_INT);
 $difficulty = required_param('difficulty', PARAM_ALPHA);
-$quizjson = required_param('quizjson', PARAM_RAW);
+$quizjson = optional_param('quizjson', '', PARAM_RAW);
 $topics = optional_param_array('topics', [], PARAM_TEXT);
 
-$quizData = json_decode($quizjson, true);
+$quizData = null;
+
+if (isset($_SESSION['ai_quiz_data'])) {
+    $quizData = $_SESSION['ai_quiz_data'];
+} elseif (!empty($quizjson)) {
+    $quizData = json_decode($quizjson, true);
+}
 
 if (!$quizData) {
     die("Invalid quiz data.");
@@ -53,6 +59,17 @@ echo $OUTPUT->header();
         <?php foreach ($topics as $t): ?>
             <input type="hidden" name="topics[]" value="<?php echo s($t); ?>">
         <?php endforeach; ?>
+
+        <?php
+        // If sections are POSTed to this page then include them as hidden fields for final submit.
+        $sections_posted = optional_param_array('sections', [], PARAM_RAW);
+        if (!empty($sections_posted)) {
+            foreach ($sections_posted as $sec) {
+                // sec is expected in format UNIT|SECTION (as produced by student_quiz.js)
+                echo '<input type="hidden" name="sections[]" value="' . s($sec) . '">';
+            }
+        }
+        ?>
 
         <?php foreach ($quizData as $index => $q): ?>
 

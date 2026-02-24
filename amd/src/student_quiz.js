@@ -194,9 +194,15 @@ define(['jquery'], function($) {
                                 form.append(`<input type="hidden" name="totalquestions" value="${data.questions.length}">`);
                                 form.append(`<input type="hidden" name="quizjson" value='${JSON.stringify(data.questions)}'>`);
 
-                                // Add selected topics
+                                // Add selected units
                                 selectedUnits.forEach(function(u) {
                                     form.append(`<input type="hidden" name="topics[]" value="${u}">`);
+                                });
+                                
+                                // Add selected sections (each as "UNIT|SECTION")
+                                selectedSections.forEach(function(s) {
+                                    // s.unit and s.section should exist (your earlier collection)
+                                    form.append(`<input type="hidden" name="sections[]" value="${s.unit}|${s.section}">`);
                                 });
 
                                 $('body').append(form);
