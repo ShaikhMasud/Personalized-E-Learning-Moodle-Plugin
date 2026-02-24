@@ -272,10 +272,10 @@ define([
     }
 
     //analytics helper
-    function loadStudentDetails(studentid) {
+    function loadStudentDetails(studentid, studentName) {
+
         $('#chatbot-messages').html('<div>Loading details...</div>');
 
-        // First fetch quiz attempts
         $.ajax({
             url: M.cfg.wwwroot + '/local/automation/analytics_ajax.php',
             method: 'POST',
@@ -287,34 +287,104 @@ define([
             },
             success: function(quizzes) {
 
-                let html = '<h4>Quiz Attempts</h4>';
+                let html = `
+                    <div class="analytics-header">
+                        <button id="analytics-back-btn">← Back</button>
+                        <div class="analytics-student-name">${escapeHtml(studentName)}</div>
+                    </div>
+                `;
+
+                html += `<h4>Quiz Attempts</h4>`;
 
                 if (quizzes.length === 0) {
-                    html += '<div>No quiz attempts found.</div>';
+                    html += `<div class="analytics-empty">No quiz attempts found.</div>`;
                 } else {
+
+                    html += `
+                        <div class="analytics-table-wrapper">
+                            <table class="analytics-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date & Time</th>
+                                        <th>Score</th>
+                                        <th>Topic</th>
+                                        <th>Difficulty</th>
+                                        <th>Recommendation</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+
                     quizzes.forEach(q => {
+
+                        const date = new Date(parseInt(q.timecreated) * 1000)
+                            .toLocaleString();
+
                         html += `
-                            <div>
-                                Score: ${q.score}/${q.total}
-                                | Difficulty: ${q.difficulty}
-                                | Topic: ${q.topic}
-                            </div>
+                            <tr>
+                                <td>${date}</td>
+                                <td>${q.score}/${q.total}</td>
+                                <td>${escapeHtml(q.topic)}</td>
+                                <td>${escapeHtml(q.difficulty)}</td>
+                                <td>${escapeHtml(q.recommendation)}</td>
+                            </tr>
                         `;
                     });
+
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
                 }
 
-                // Add Chat History section placeholder
+                // Chat history section
                 html += `
                     <h4 style="margin-top:20px;">Chat History</h4>
-                    <div id="analytics-chat-history"
-                         style="max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:10px;">
+                    <div id="analytics-chat-history" class="analytics-chat-box">
                         Loading chat history...
                     </div>
                 `;
 
                 $('#chatbot-messages').html(html);
 
-                // Now fetch chat history
+                // Back button handler
+                $('#analytics-back-btn').on('click', function() {
+
+                    $('#chatbot-messages').html('<div>Loading students...</div>');
+
+                    $.ajax({
+                        url: M.cfg.wwwroot + '/local/automation/analytics_ajax.php',
+                        method: 'POST',
+                        data: {
+                            action: 'get_students',
+                            courseid: pageConfig.currentcourseid,
+                            sesskey: M.cfg.sesskey
+                        },
+                        success: function(students) {
+                        
+                            let html = `
+                                <div class="analytics-student-list">
+                                    <h4>Enrolled Students</h4>
+                            `;
+                        
+                            students.forEach(s => {
+                                const name = escapeHtml((s.firstname || '') + ' ' + (s.lastname || ''));
+                                html += `
+                                    <div class="analytics-student"
+                                         data-studentid="${escapeHtml(String(s.id))}">
+                                        ${name}
+                                    </div>
+                                `;
+                            });
+                        
+                            html += `</div>`;
+                        
+                            $('#chatbot-messages').html(html);
+                        }
+                    });
+                });             
+
                 fetchStudentChat(studentid);
             }
         });
@@ -405,7 +475,10 @@ define([
                     sesskey: M.cfg.sesskey
                 },
                 success: function(students) {
-                    let html = '<h4>Enrolled Students</h4>';
+                    let html = `
+                        <div class="analytics-student-list">
+                            <h4>Enrolled Students</h4>
+                    `;
                     students.forEach(s => {
                         const name = escapeHtml((s.firstname || '') + ' ' + (s.lastname || ''));
                         html += `
@@ -415,13 +488,16 @@ define([
                         `;
                     });
 
+                    html += `</div>`;
+
                     $('#chatbot-messages').html(html);
 
                     // delegated click handler (safer)
                     $('#chatbot-messages').off('click', '.analytics-student');
                     $('#chatbot-messages').on('click', '.analytics-student', function() {
                         const studentid = $(this).data('studentid');
-                        loadStudentDetails(studentid);
+                        const studentName = $(this).text();
+                        loadStudentDetails(studentid, studentName);
                     });
                 },
                 error: function(xhr) {

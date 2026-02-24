@@ -643,3 +643,90 @@ input[type="checkbox"] {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(37,99,235,0.3);
 }
+
+/* ============================= */
+/* ANALYTICS UI STYLING */
+/* ============================= */
+
+.analytics-student {
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.analytics-student:hover {
+    background: #f3f4f6;
+}
+
+.analytics-header {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+#analytics-back-btn {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    color: #2563eb;
+    cursor: pointer;
+    font-weight: 600;
+    padding: 0;
+    margin-bottom: 6px;
+}
+
+#analytics-back-btn:hover {
+    text-decoration: underline;
+}
+
+.analytics-student-name {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.analytics-table-wrapper {
+    overflow-x: auto;
+}
+
+.analytics-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 0.85rem;
+}
+
+.analytics-table th {
+    background: #f9fafb;
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.analytics-table td {
+    padding: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.analytics-table td:nth-child(4) {
+    font-weight: 600;
+}
+
+.analytics-table tr:hover {
+    background: #f3f4f6;
+}
+
+.analytics-chat-box {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px;
+    background: #fafafa;
+    font-size: 0.8rem;
+}
+
+.analytics-empty {
+    color: #888;
+    margin-top: 10px;
+}

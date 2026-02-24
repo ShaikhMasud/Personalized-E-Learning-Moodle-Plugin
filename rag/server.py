@@ -120,7 +120,17 @@ def ask_question(data: QuestionRequest):
                 "7. Do NOT give long bullet lists.\n"
                 "8. Encourage the student to think.\n"
                 "9. Never mention documents or syllabus.\n"
-                "10. If something asked is completely irrelevant to the topic, just answer that, This is out of scope.\n"
+                "10. If something asked is completely irrelevant, say: This is out of scope.\n"
+                "11. Structure answers using short paragraphs.\n"
+                "12. Use at most 2–3 short blocks of text.\n"
+                "13. If defining something, follow this format:\n"
+                "   - One-line definition.\n"
+                "   - One short intuitive explanation.\n"
+                "   - One small example (1–2 lines only).\n"
+                "14. Avoid long analogies.\n"
+                "15. Avoid ASCII diagrams.\n"
+                "16. Avoid repeating ideas.\n"
+                "17. Keep total response under 120 words.\n"
             )
         },
         {
@@ -143,7 +153,7 @@ def ask_question(data: QuestionRequest):
         model="llama-3.1-8b-instant",
         messages=messages,
         temperature=0.3,
-        max_tokens=300
+        max_tokens=220
     )
 
     return {
