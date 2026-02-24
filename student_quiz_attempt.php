@@ -31,43 +31,62 @@ $PAGE->set_context($context);
 $PAGE->set_title('Quiz Attempt');
 $PAGE->set_heading('Quiz Attempt');
 $PAGE->set_pagelayout('popup'); // cleaner layout
+$PAGE->requires->css('/local/automation/style/chatbot.css');
 
 echo $OUTPUT->header();
 ?>
 
-<h3>Quiz Attempt</h3>
+<div class="exam-wrapper">
 
-<div id="timer" style="position:fixed; top:20px; right:20px; font-size:18px; font-weight:bold;"></div>
-
-<form id="quizForm" method="POST" action="student_quiz_submit.php">
-
-<input type="hidden" name="sesskey" value="<?php echo sesskey(); ?>">
-<input type="hidden" name="courseid" value="<?php echo $courseid; ?>">
-<input type="hidden" name="difficulty" value="<?php echo s($difficulty); ?>">
-<input type="hidden" name="totalquestions" value="<?php echo $total; ?>">
-
-<?php foreach ($topics as $t): ?>
-    <input type="hidden" name="topics[]" value="<?php echo s($t); ?>">
-<?php endforeach; ?>
-
-<?php foreach ($quizData as $index => $q): ?>
-
-    <div style="margin-bottom:20px;">
-        <p><strong>Q<?php echo $index + 1; ?>:</strong>
-        <?php echo s($q['question']); ?></p>
-
-        <?php foreach ($q['options'] as $optIndex => $option): ?>
-            <label>
-                <input type="radio" name="q<?php echo $index; ?>" value="<?php echo $optIndex; ?>">
-                <?php echo s($option); ?>
-            </label><br>
-        <?php endforeach; ?>
+    <div class="exam-header">
+        <h2>Quiz Attempt</h2>
+        <div id="timer" class="exam-timer"></div>
     </div>
 
-<?php endforeach; ?>
+    <form id="quizForm" method="POST" action="student_quiz_submit.php">
 
-<button type="submit">Submit Quiz</button>
-</form>
+        <input type="hidden" name="sesskey" value="<?php echo sesskey(); ?>">
+        <input type="hidden" name="courseid" value="<?php echo $courseid; ?>">
+        <input type="hidden" name="difficulty" value="<?php echo s($difficulty); ?>">
+        <input type="hidden" name="totalquestions" value="<?php echo $total; ?>">
+
+        <?php foreach ($topics as $t): ?>
+            <input type="hidden" name="topics[]" value="<?php echo s($t); ?>">
+        <?php endforeach; ?>
+
+        <?php foreach ($quizData as $index => $q): ?>
+
+            <div class="question-card">
+                <div class="question-title">
+                    Q<?php echo $index + 1; ?>.
+                </div>
+
+                <div class="question-text">
+                    <?php echo s($q['question']); ?>
+                </div>
+
+                <div class="options-group">
+                    <?php foreach ($q['options'] as $optIndex => $option): ?>
+                        <label class="option-item">
+                            <input type="radio"
+                                   name="q<?php echo $index; ?>"
+                                   value="<?php echo $optIndex; ?>">
+                            <span><?php echo s($option); ?></span>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+        <?php endforeach; ?>
+
+        <div class="submit-wrapper">
+            <button type="submit" class="submit-btn">
+                Submit Quiz
+            </button>
+        </div>
+
+    </form>
+</div>
 
 <script>
 let totalTime = <?php
