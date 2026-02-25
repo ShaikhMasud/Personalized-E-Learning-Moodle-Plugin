@@ -48,6 +48,14 @@ define(['jquery'], function($) {
                 res.forEach(msg => {
                     appendMessage(msg.message, msg.sender, parseInt(msg.timecreated), false);
                 });
+                // Auto scroll after loading
+                const msgBox = $('#chatbot-messages')[0];
+                if (msgBox) {
+                    msgBox.scrollTo({
+                        top: msgBox.scrollHeight,
+                        behavior: 'auto'
+                    });
+                }
             }
         });
     }

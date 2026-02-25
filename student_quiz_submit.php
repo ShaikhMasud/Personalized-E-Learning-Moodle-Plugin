@@ -165,7 +165,22 @@ $record->difficulty = $difficulty;
 $record->recommendation = $recommendation;
 $record->timecreated = time();
 
-$DB->insert_record('local_automation_student_quiz', $record);
+$quizid = $DB->insert_record('local_automation_student_quiz', $record);
+
+// Build chat message summary
+$chatMessage = 
+    "📘 <strong>Quiz ID:</strong> $quizid<br>" .
+    "<strong>Score:</strong> $score / $total<br>" .
+    "<strong>Recommendation:</strong> $recommendation";
+
+$chatRecord = new stdClass();
+$chatRecord->studentid = $USER->id;
+$chatRecord->courseid = $courseid;
+$chatRecord->message = $chatMessage;
+$chatRecord->sender = 'bot'; // so it appears as tutor/system
+$chatRecord->timecreated = time();
+
+$DB->insert_record('local_automation_student_chat', $chatRecord);
 
 // redirect back to course with message
 redirect(
