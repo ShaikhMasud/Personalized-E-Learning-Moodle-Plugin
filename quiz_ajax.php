@@ -30,6 +30,71 @@ header('Content-Type: application/json; charset=utf-8');
 
 global $CFG, $DB, $USER;
 
+/* ===================== Build user prompt ===================== */
+
+$details = [];
+$details[] = "Course: {$course->fullname} ({$course->shortname})";
+$details[] = "Quiz name: {$quizname}";
+$details[] = "Number of questions: {$numquestions}";
+$details[] = "Marks per question: {$marksperquestion}";
+
+if ($timelimitminutes > 0) {
+    $details[] = "Time limit (minutes): {$timelimitminutes}";
+}
+
+if ($instructions !== '') {
+    $details[] = "Teacher instructions: {$instructions}";
+}
+
+if ($filesummarytext !== '') {
+    $details[] = "";
+    $details[] = "Selected files:";
+    $details[] = $filesummarytext;
+}
+
+$detailblock = implode("\n", $details);
+
+$contextblock = $filecontentstext ?: '(No readable text found in selected files; use only file names and course name to guess topics.)';
+
+$userPrompt = <<<EOT
+Generate exactly {$numquestions} single-best-answer multiple-choice questions for a Moodle quiz.
+
+Quiz and teacher details:
+{$detailblock}
+
+CONTENT FROM FILES (PRIMARY SOURCE FOR CONCEPTS):
+{$contextblock}
+
+IMPORTANT:
+Return ONLY valid JSON.
+The first character must be { and the last character must be }.
+
+JSON format:
+
+{
+  "questions": [
+    {
+      "questiontext": "Question text here",
+      "options": [
+        "Option A",
+        "Option B",
+        "Option C",
+        "Option D"
+      ],
+      "correct_index": 1,
+      "feedback": "Short explanation"
+    }
+  ]
+}
+
+Rules:
+- All questions must be answerable from the provided content.
+- "options" must always contain exactly 4 strings.
+- "correct_index" must be 0, 1, 2, or 3.
+- Do NOT include numbering inside questiontext.
+- Do NOT output text outside JSON.
+EOT;
+
 /* ===================== Helpers ===================== */
 
 function local_automation_quiz_safe_utf8(string $text): string {
@@ -334,6 +399,7 @@ function local_automation_quiz_call_groq(string $systemPrompt, string $userPromp
 
     $payload = [
         'model'    => $model,
+        'temperature' => 0.2,
         'messages' => [
             ['role' => 'system', 'content' => $systemPrompt],
             ['role' => 'user',   'content' => $userPrompt],
@@ -488,11 +554,6 @@ if ($action === 'upload') {
     // Insert quiz row.
     $quizid   = $DB->insert_record('quiz', $quiz);
     $quiz = $DB->get_record('quiz', ['id' => $quizid], '*', MUST_EXIST);
-
-    // =============================
-    // 2) Create course module and put it in the section
-    // (exactly like your working version)
-    // =============================
     $moduleid = $DB->get_field('modules', 'id', ['name' => 'quiz'], MUST_EXIST);
 
     require_once($CFG->dirroot . '/course/lib.php');
@@ -507,6 +568,14 @@ if ($action === 'upload') {
 
     $cmid = add_course_module($cm);
     course_add_cm_to_section($courseid, $cmid, $sectionnum);
+
+    $quiz->cmid = $cm->id;
+    $quiz->course = $courseid;
+
+    // =============================
+    // 2) Create course module and put it in the section
+    // (exactly like your working version)
+    // =============================
     // rebuild_course_cache($courseid, true);
 
     // =============================
@@ -549,9 +618,6 @@ if ($action === 'upload') {
 
         // Recalculate quiz total marks.
         quiz_update_sumgrades($quiz);
-
-        // Force a clean one-page layout so pagelayout never has weird indexes.
-        // 0 = all questions on one page.
         quiz_repaginate_questions($quiz->id, 0);
 
         // Make sure the quiz has a valid page layout (all questions on one page).
@@ -648,76 +714,35 @@ if (function_exists('mb_strlen') &&
 /* ===================== Build prompts ===================== */
 
 $systemPrompt = <<<EOT
-You are an assistant that generates multiple-choice quiz questions (MCQs) for university-level courses.
+You are an AI that generates multiple-choice quiz questions.
 
-HARD RULES (VERY IMPORTANT):
-- You must respond with STRICT JSON only, no markdown, no explanations, no commentary.
-- The top-level JSON must be an object with a single key "questions".
-- "questions" must be an array.
-- Each element of "questions" must be an object with:
-  - "questiontext": string, the question stem (no numbering).
-  - "options": array of exactly 4 short answer strings.
-  - "correct_index": integer from 0 to 3 (index into the options array).
-  - "feedback": string (optional), brief explanation of the correct answer.
+CRITICAL RULES:
+- Output ONLY valid JSON.
+- Do NOT output explanations.
+- Do NOT output markdown.
+- Do NOT output text before or after JSON.
 
-Do NOT:
-- Do NOT add any text before or after the JSON object.
-- Do NOT wrap the JSON in code fences like ```json.
-- Do NOT include question numbers in "questiontext".
-EOT;
-
-$details = [];
-$details[] = "Course: {$course->fullname} ({$course->shortname})";
-$details[] = "Quiz name: {$quizname}";
-$details[] = "Number of questions: {$numquestions}";
-$details[] = "Marks per question: {$marksperquestion}";
-if ($timelimitminutes > 0) {
-    $details[] = "Time limit (minutes): {$timelimitminutes}";
-}
-if ($instructions !== '') {
-    $details[] = "Teacher instructions: {$instructions}";
-}
-if ($filesummarytext !== '') {
-    $details[] = "";
-    $details[] = "Selected files:";
-    $details[] = $filesummarytext;
-}
-
-$detailblock  = implode("\n", $details);
-$contextblock = $filecontentstext ?: '(No readable text found in selected files; use only file names and course name to guess topics.)';
-
-$userPrompt = <<<EOT
-Generate exactly {$numquestions} single-best-answer multiple-choice questions for a Moodle quiz.
-
-Quiz and teacher details:
-{$detailblock}
-
-CONTENT FROM FILES (PRIMARY SOURCE FOR CONCEPTS):
-{$contextblock}
-
-You MUST output a SINGLE JSON object of this exact shape:
+The JSON MUST match this structure exactly:
 
 {
   "questions": [
     {
-      "questiontext": "Question text here",
-      "options": [
-        "Option A",
-        "Option B",
-        "Option C",
-        "Option D"
-      ],
-      "correct_index": 1,
-      "feedback": "Short explanation for the correct answer (optional)"
+      "questiontext": "string",
+      "options": ["string","string","string","string"],
+      "correct_index": 0,
+      "feedback": "string"
     }
   ]
 }
 
 Rules:
-- All questions must be answerable based on the above content/topics.
-- "options" must always have exactly 4 elements.
-- "correct_index" must be 0, 1, 2, or 3.
-- Do NOT include any other keys at the top level besides "questions".
+- "questions" must contain the exact number requested.
+- "options" must always contain exactly 4 strings.
+- "correct_index" must be 0,1,2, or 3.
+- No numbering in questiontext.
+- No extra keys.
+
+Return ONLY JSON.
 EOT;
 
 /* ===================== Call Groq ===================== */
