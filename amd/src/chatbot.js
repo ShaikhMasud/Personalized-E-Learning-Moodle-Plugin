@@ -50,26 +50,26 @@ define([
     }
 
     // ===== UI helpers =====
-    function appendMessage(text, sender, timestamp, store = true) {
-
-            console.log("APPEND CALLED →", {
-            text,
-            sender,
-            timestamp,
-            type: typeof timestamp
-        });
-
-        if (!timestamp) {
-            console.warn("⚠️ TIMESTAMP IS INVALID:", timestamp);
-        }
-
-        const dateObj = new Date(parseInt(timestamp) * 1000);
+    function appendMessage(text, sender, timestamp = Math.floor(Date.now() / 1000), store = true) {
+        const dateObj = new Date(timestamp * 1000);
         const time = dateObj.toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit'
         });
 
         const dateString = dateObj.toDateString();
+        
+        console.log("APPEND CALLED →", {
+            text,
+            sender,
+            timestamp,
+            type: typeof timestamp
+        });
+
+        if (!timestamp || isNaN(timestamp)) {
+            timestamp = Math.floor(Date.now() / 1000);
+        }
+
     
         const container = $('#chatbot-messages');
     
