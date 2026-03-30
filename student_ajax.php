@@ -16,6 +16,45 @@ error_log("STUDENT AJAX CALLED");
 switch ($action) {
 
     // ===== Save chat message =====
+    case 'generate_quiz':
+
+        $difficulty = required_param('difficulty', PARAM_TEXT);
+        $count = required_param('count', PARAM_INT);
+
+        $userid = $USER->id;
+
+        // 🔒 CHECK LOCK
+        $lock = $DB->get_record('local_automation_quiz_lock', [
+            'studentid' => $userid,
+            'courseid' => $courseid,
+            'difficulty' => $difficulty
+        ]);
+
+        if ($lock && $lock->locked == 1) {
+            echo json_encode([
+                'error' => true,
+                'message' => 'This difficulty is locked by your teacher.'
+            ]);
+            break;
+        }
+
+        /* ================= QUIZ GENERATION ================= */
+
+        // 👉 Replace this with your real logic
+        $html = "";
+
+        for ($i = 1; $i <= $count; $i++) {
+            $html .= "<div style='padding:8px;border:1px solid #ddd;margin-bottom:5px;'>
+                        Question $i ($difficulty)
+                    </div>";
+        }
+
+        echo json_encode([
+            'error' => false,
+            'html' => $html
+        ]);
+
+        break;
     case 'save_message':
 
         $message = required_param('message', PARAM_RAW);

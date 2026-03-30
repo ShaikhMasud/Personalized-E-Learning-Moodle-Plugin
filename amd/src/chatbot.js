@@ -588,74 +588,101 @@ define([
 
     // helper to pick student/teacher flow after template present
     function activateModeAfterRender(config) {
-        // For safety, ensure Student knows config
-        if (config && config.role === 'student') {
-            console.log("INSIDE STUDENT BLOCK");
+    // For safety, ensure Student knows config
+    if (config && config.role === 'student') {
+        console.log("INSIDE STUDENT BLOCK",config);
 
-            // If outside demo course → disable button
-            if (parseInt(config.currentcourseid) !== parseInt(config.democourseid)) {
-                $('#ai-chatbot-button').off('click');
-                return;
-            }
-
-            currentMode = 'student';
-            $('.chat-tabs').hide();
-            $('.chat-header span').text('AI Course Tutor');
-            $('#chatbot-input').attr('placeholder', 'Ask about this course…');
-
-            Student.initConfig(config);
-
-            // Make input area flex (ensures proper alignment)
-            $('.chat-input-area').css({
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-            });
-
-            // Remove old action-area button
-            $('#chatbot-action-area').empty();
-
-            // Add Take Quiz icon button to LEFT of input
-            if (!$('#chatbot-take-quiz-btn').length) {
-                $('.chat-input-area').prepend(`
-                    <button id="chatbot-take-quiz-btn"
-                            type="button"
-                            title="Take Quiz"
-                            aria-label="Take Quiz">
-                        ✍️
-                    </button>
-                `);
-            }
-
-            // Keep SAME redirect logic as before
-            $('#chatbot-take-quiz-btn').off('click').on('click', function () {
-                window.location.href =
-                    M.cfg.wwwroot +
-                    '/local/automation/student_quiz.php?courseid=' +
-                    config.currentcourseid;
-            });
-
-            // Modify Send button styling + icon
-            $('#chatbot-send-btn')
-                .html('✉️')
-                .attr('title', 'Send Message')
-                .attr('aria-label', 'Send Message')
-                .css({
-                    borderRadius: '14px',
-                    padding: '6px 14px',
-                    fontSize: '18px'
-                });
-
-            Student.loadHistory(appendMessage);
-
-        } else {
-            // Teacher → use localStorage history
-            $('.chat-tabs').show();
-            $('.chat-header span').text('AI Assistant');
-            currentMode = 'assistant';
-            loadHistory();
+        // If outside demo course → disable button
+        if (parseInt(config.currentcourseid) !== parseInt(config.democourseid)) {
+            $('#ai-chatbot-button').off('click');
+            return;
         }
+
+        currentMode = 'student';
+        $('.chat-tabs').hide();
+        $('.chat-header span').text('AI Course Tutor');
+        $('#chatbot-input').attr('placeholder', 'Ask about this course…');
+
+        Student.initConfig(config);
+
+        // Make input area flex
+        $('.chat-input-area').css({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+        });
+
+        // Remove old action-area button
+        $('#chatbot-action-area').empty();
+
+        // ✅ CREATE BUTTONS FIRST
+
+        // Chat button
+        if (!$('#chatbot-open-chat-btn').length) {
+            $('.chat-input-area').prepend(`
+                <button id="chatbot-open-chat-btn"
+                        type="button"
+                        title="Chat with Teacher"
+                        aria-label="Chat with Teacher">
+                    💬
+                </button>
+            `);
+        }
+
+        // Quiz button
+        if (!$('#chatbot-take-quiz-btn').length) {
+            $('.chat-input-area').prepend(`
+                <button id="chatbot-take-quiz-btn"
+                        type="button"
+                        title="Take Quiz"
+                        aria-label="Take Quiz">
+                    ✍️
+                </button>
+            `);
+        }
+        console.log("user:", config.userid);
+
+        // ✅ NOW ATTACH CLICK HANDLERS
+
+        $('#chatbot-open-chat-btn').off('click').on('click', function () {
+            console.log("CLICK WORKING");
+            console.log("course:", config.currentcourseid);
+            window.location.href =
+                M.cfg.wwwroot +
+                '/local/automation/chat.php?courseid=' +
+                config.currentcourseid +
+                '&studentid=' +
+                M.cfg.userId;
+        });
+
+        $('#chatbot-take-quiz-btn').off('click').on('click', function () {
+            window.location.href =
+                M.cfg.wwwroot +
+                '/local/automation/student_quiz.php?courseid=' +
+                config.currentcourseid;
+        });
+
+        // Modify Send button styling + icon
+        $('#chatbot-send-btn')
+            .html('✉️')
+            .attr('title', 'Send Message')
+            .attr('aria-label', 'Send Message')
+            .css({
+                borderRadius: '14px',
+                padding: '6px 14px',
+                fontSize: '18px'
+            });
+
+        Student.loadHistory(appendMessage);
+
+    } else {
+        // Teacher → use localStorage history
+        $('.chat-tabs').show();
+        $('.chat-header span').text('AI Assistant');
+        currentMode = 'assistant';
+        loadHistory();
     }
+}
 
     return { init: init };
 });

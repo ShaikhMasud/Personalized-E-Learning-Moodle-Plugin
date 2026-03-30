@@ -7,7 +7,7 @@
 
         <!-- Student Chat History -->
         <TABLE NAME="local_automation_student_chat" COMMENT="Stores student chatbot conversations">
-            <FIELDSS>
+            <FIELDS>
                 <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
                 <FIELD NAME="studentid" TYPE="int" LENGTH="10" NOTNULL="true"/>
                 <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true"/>
@@ -18,14 +18,10 @@
             <KEYS>
                 <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
             </KEYS>
-            <INDEXES>
-                <INDEX NAME="studentid_idx" UNIQUE="false" FIELDS="studentid"/>
-                <INDEX NAME="courseid_idx" UNIQUE="false" FIELDS="courseid"/>
-            </INDEXES>
         </TABLE>
 
-        <!-- Student Mini Quiz Attempts -->
-        <TABLE NAME="local_automation_student_quiz" COMMENT="Stores student mini quiz attempts">
+        <!-- Student Quiz -->
+        <TABLE NAME="local_automation_student_quiz">
             <FIELDS>
                 <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
                 <FIELD NAME="studentid" TYPE="int" LENGTH="10" NOTNULL="true"/>
@@ -34,15 +30,46 @@
                 <FIELD NAME="score" TYPE="int" LENGTH="5" NOTNULL="true"/>
                 <FIELD NAME="total" TYPE="int" LENGTH="5" NOTNULL="true"/>
                 <FIELD NAME="difficulty" TYPE="char" LENGTH="20" NOTNULL="true"/>
-                <FIELD NAME="recommendation" TYPE="text" NOTNULL="false"/>
+                <FIELD NAME="recommendation" TYPE="text"/>
                 <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true"/>
             </FIELDS>
             <KEYS>
                 <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
             </KEYS>
+        </TABLE>
+
+        <!-- Advice -->
+        <TABLE NAME="local_automation_advice">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+                <FIELD NAME="studentid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+                <FIELD NAME="teacherid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+                <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+                <FIELD NAME="advice" TYPE="text" NOTNULL="true"/>
+                <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+            </KEYS>
+        </TABLE>
+
+        <TABLE NAME="local_automation_quiz_lock" COMMENT="Stores difficulty lock per student">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+                <FIELD NAME="studentid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+                <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+                <FIELD NAME="difficulty" TYPE="char" LENGTH="10" NOTNULL="true"/>
+                <FIELD NAME="locked" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"/>
+                <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true"/>
+                <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true"/>
+            </FIELDS>
+
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+            </KEYS>
+
             <INDEXES>
-                <INDEX NAME="studentid_idx2" UNIQUE="false" FIELDS="studentid"/>
-                <INDEX NAME="courseid_idx2" UNIQUE="false" FIELDS="courseid"/>
+                <INDEX NAME="uniq_lock" UNIQUE="true" FIELDS="studentid, courseid, difficulty"/>
             </INDEXES>
         </TABLE>
 
