@@ -50,26 +50,26 @@ define([
     }
 
     // ===== UI helpers =====
-    function appendMessage(text, sender, timestamp, store = true) {
-
-            console.log("APPEND CALLED →", {
-            text,
-            sender,
-            timestamp,
-            type: typeof timestamp
-        });
-
-        if (!timestamp) {
-            console.warn("⚠️ TIMESTAMP IS INVALID:", timestamp);
-        }
-
-        const dateObj = new Date(parseInt(timestamp) * 1000);
+    function appendMessage(text, sender, timestamp = Math.floor(Date.now() / 1000), store = true) {
+        const dateObj = new Date(timestamp * 1000);
         const time = dateObj.toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit'
         });
 
         const dateString = dateObj.toDateString();
+        
+        console.log("APPEND CALLED →", {
+            text,
+            sender,
+            timestamp,
+            type: typeof timestamp
+        });
+
+        if (!timestamp || isNaN(timestamp)) {
+            timestamp = Math.floor(Date.now() / 1000);
+        }
+
     
         const container = $('#chatbot-messages');
     
@@ -457,56 +457,6 @@ define([
             $input.attr('placeholder', 'Type preferences for this question bank (optional)…');
         } else if (currentMode === 'quiz') {
             $input.attr('placeholder', 'Describe the quiz you want to generate…');
-        } else if (currentMode === 'analytics') {
-            // hide input area for analytics mode
-            const $inputArea = $('.chat-input-area');
-            $inputArea.hide();
-            $input.attr('placeholder', ''); // no placeholder
-
-            // Load analytics content
-            $('#chatbot-messages').html('<div>Loading students...</div>');
-
-            $.ajax({
-                url: M.cfg.wwwroot + '/local/automation/analytics_ajax.php',
-                method: 'POST',
-                data: {
-                    action: 'get_students',
-                    courseid: pageConfig.currentcourseid,
-                    sesskey: M.cfg.sesskey
-                },
-                success: function(students) {
-                    let html = `
-                        <div class="analytics-student-list">
-                            <h4>Enrolled Students</h4>
-                    `;
-                    students.forEach(s => {
-                        const name = escapeHtml((s.firstname || '') + ' ' + (s.lastname || ''));
-                        html += `
-                            <div class="analytics-student" data-studentid="${escapeHtml(String(s.id))}">
-                                ${name}
-                            </div>
-                        `;
-                    });
-
-                    html += `</div>`;
-
-                    $('#chatbot-messages').html(html);
-
-                    // delegated click handler (safer)
-                    $('#chatbot-messages').off('click', '.analytics-student');
-                    $('#chatbot-messages').on('click', '.analytics-student', function() {
-                        const studentid = $(this).data('studentid');
-                        const studentName = $(this).text();
-                        loadStudentDetails(studentid, studentName);
-                    });
-                },
-                error: function(xhr) {
-                    $('#chatbot-messages').html('<div>Error fetching students.</div>');
-                }
-            });
-
-            clearConfirmButton();
-            return;
         } else {
             // Assistant default
             $input.attr('placeholder', 'Type your message…');
@@ -638,74 +588,132 @@ define([
 
     // helper to pick student/teacher flow after template present
     function activateModeAfterRender(config) {
-        // For safety, ensure Student knows config
-        if (config && config.role === 'student') {
-            console.log("INSIDE STUDENT BLOCK");
+    // For safety, ensure Student knows config
+    if (config && config.role === 'student') {
+        console.log("INSIDE STUDENT BLOCK",config);
+        // ============================
+        // DASHBOARD BUTTON (SAFE ADD)
+        // ============================
 
-            // If outside demo course → disable button
-            if (parseInt(config.currentcourseid) !== parseInt(config.democourseid)) {
-                $('#ai-chatbot-button').off('click');
-                return;
-            }
-
-            currentMode = 'student';
-            $('.chat-tabs').hide();
-            $('.chat-header span').text('AI Course Tutor');
-            $('#chatbot-input').attr('placeholder', 'Ask about this course…');
-
-            Student.initConfig(config);
-
-            // Make input area flex (ensures proper alignment)
-            $('.chat-input-area').css({
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-            });
-
-            // Remove old action-area button
-            $('#chatbot-action-area').empty();
-
-            // Add Take Quiz icon button to LEFT of input
-            if (!$('#chatbot-take-quiz-btn').length) {
-                $('.chat-input-area').prepend(`
-                    <button id="chatbot-take-quiz-btn"
-                            type="button"
-                            title="Take Quiz"
-                            aria-label="Take Quiz">
-                        ✍️
-                    </button>
-                `);
-            }
-
-            // Keep SAME redirect logic as before
-            $('#chatbot-take-quiz-btn').off('click').on('click', function () {
-                window.location.href =
-                    M.cfg.wwwroot +
-                    '/local/automation/student_quiz.php?courseid=' +
-                    config.currentcourseid;
-            });
-
-            // Modify Send button styling + icon
-            $('#chatbot-send-btn')
-                .html('✉️')
-                .attr('title', 'Send Message')
-                .attr('aria-label', 'Send Message')
-                .css({
-                    borderRadius: '14px',
-                    padding: '6px 14px',
-                    fontSize: '18px'
-                });
-
-            Student.loadHistory(appendMessage);
-
-        } else {
-            // Teacher → use localStorage history
-            $('.chat-tabs').show();
-            $('.chat-header span').text('AI Assistant');
-            currentMode = 'assistant';
-            loadHistory();
+        // Create button only if not exists
+        if (!$('#chatbot-dashboard-btn').length) {
+            $('.chat-input-area').prepend(`
+                <button id="chatbot-dashboard-btn"
+                        type="button"
+                        title="Student Dashboard"
+                        aria-label="Student Dashboard"
+                        style="
+                            border: none;
+                            background: #2196F3;
+                            color: white;
+                            padding: 6px 10px;
+                            border-radius: 8px;
+                            cursor: pointer;
+                        ">
+                    📊
+                </button>
+            `);
         }
+
+        // Attach click event safely
+        $('#chatbot-dashboard-btn').off('click').on('click', function () {
+            window.location.href =
+                M.cfg.wwwroot +
+                '/local/automation/student_dashboard.php?courseid=' +
+                config.currentcourseid;
+        });
+
+        // If outside demo course → disable button
+        if (parseInt(config.currentcourseid) !== parseInt(config.democourseid)) {
+            $('#ai-chatbot-button').off('click');
+            return;
+        }
+
+        currentMode = 'student';
+        $('.chat-tabs').hide();
+        $('.chat-header span').text('AI Course Tutor');
+        $('#chatbot-input').attr('placeholder', 'Ask about this course…');
+
+        Student.initConfig(config);
+
+        // Make input area flex
+        $('.chat-input-area').css({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+        });
+
+        // Remove old action-area button
+        $('#chatbot-action-area').empty();
+
+        // ✅ CREATE BUTTONS FIRST
+
+        // Chat button
+        if (!$('#chatbot-open-chat-btn').length) {
+            $('.chat-input-area').prepend(`
+                <button id="chatbot-open-chat-btn"
+                        type="button"
+                        title="Chat with Teacher"
+                        aria-label="Chat with Teacher">
+                    💬
+                </button>
+            `);
+        }
+
+        // Quiz button
+        if (!$('#chatbot-take-quiz-btn').length) {
+            $('.chat-input-area').prepend(`
+                <button id="chatbot-take-quiz-btn"
+                        type="button"
+                        title="Take Quiz"
+                        aria-label="Take Quiz">
+                    ✍️
+                </button>
+            `);
+        }
+        console.log("user:", config.userid);
+
+        // ✅ NOW ATTACH CLICK HANDLERS
+
+        $('#chatbot-open-chat-btn').off('click').on('click', function () {
+            console.log("CLICK WORKING");
+            console.log("course:", config.currentcourseid);
+            window.location.href =
+                M.cfg.wwwroot +
+                '/local/automation/chat.php?courseid=' +
+                config.currentcourseid +
+                '&studentid=' +
+                M.cfg.userId;
+        });
+
+        $('#chatbot-take-quiz-btn').off('click').on('click', function () {
+            window.location.href =
+                M.cfg.wwwroot +
+                '/local/automation/student_quiz.php?courseid=' +
+                config.currentcourseid;
+        });
+
+        // Modify Send button styling + icon
+        $('#chatbot-send-btn')
+            .html('✉️')
+            .attr('title', 'Send Message')
+            .attr('aria-label', 'Send Message')
+            .css({
+                borderRadius: '14px',
+                padding: '6px 14px',
+                fontSize: '18px'
+            });
+
+        Student.loadHistory(appendMessage);
+
+    } else {
+        // Teacher → use localStorage history
+        $('.chat-tabs').show();
+        $('.chat-header span').text('AI Assistant');
+        currentMode = 'assistant';
+        loadHistory();
     }
+}
 
     return { init: init };
 });

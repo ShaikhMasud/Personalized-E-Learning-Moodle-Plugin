@@ -36,8 +36,10 @@ function local_automation_extend_navigation(global_navigation $nav) {
 
     $config = [
         'role' => $role,
-        'currentcourseid' => $COURSE->id ?? 0,
-        'democourseid' => get_config('local_automation', 'student_ai_courseid')
+        'currentcourseid' => $COURSE->id ?? 4,
+        'democourseid' => get_config('local_automation', 'student_ai_courseid'),
+        'userid' => $USER->id  ?? 4
+
     ];
 
     error_log('CONFIG JSON: ' . json_encode($config));
@@ -46,7 +48,7 @@ function local_automation_extend_navigation(global_navigation $nav) {
     $PAGE->requires->js_call_amd(
         'local_automation/chatbot',
         'init',
-        $config
+        [$config]
     );
 
     // Keep navigation JS

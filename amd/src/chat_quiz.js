@@ -760,7 +760,7 @@ define(['jquery', 'core/notification'], function($, Notification) {
             quizname: quizConfig.quizname,
             marksperquestion: quizConfig.marksperquestion,
             timelimitminutes: quizConfig.timelimitminutes,
-            questions: draftQuestions,
+            questions: cleaned,
         };
 
         const $btn = $('#quiz-panel .quiz-btn-upload').prop('disabled', true);
