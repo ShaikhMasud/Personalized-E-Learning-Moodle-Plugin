@@ -505,18 +505,120 @@ function unitPct(u){const d=TOPIC_DATA[u],s=d.easy.s+d.medium.s+d.hard.s,t=d.eas
 function scorePillCls(s,t){if(!t)return'score-mid';const p=s/t;return p>=0.7?'score-high':p>=0.4?'score-mid':'score-low';}
 function diffBadge(d){const dl=(d||'').toLowerCase();return dl==='easy'?`<span class="badge bs">Easy</span>`:dl==='medium'?`<span class="badge ba">Medium</span>`:dl==='hard'?`<span class="badge bw">Hard</span>`:`<span class="badge bm">${d||'—'}</span>`;}
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   resolveUnits(quiz)
+   Returns an array of short unit keys (e.g. ["U4","U5","U6"]) that a quiz
+   attempt should be credited to.
+
+   Detection order:
+   1. Explicit multi-unit tag in topic/unit string  → e.g. "UNIT IV, V"
+   2. Multiple UNIT mentions anywhere in topic text → credit all found
+   3. Section-number prefix match (4.x → U4, 5.x → U5 …)
+   4. Keyword mapping per unit's topic titles
+   5. Fallback: single UNIT roman numeral match (original behaviour)
+───────────────────────────────────────────────────────────────────────────── */
+function resolveUnits(q) {
+    const text   = ((q.topic || '') + ' ' + (q.unit || '')).toLowerCase();
+    const rawStr = ((q.topic || '') + ' ' + (q.unit || '')).toUpperCase();
+
+    const found = new Set();
+
+    // ── 1 & 2: scan for every "UNIT <roman>" occurrence in the combined string
+    const unitRegex = /UNIT\s+(VI|IV|V|III|II|I)/g;
+    let m;
+    while ((m = unitRegex.exec(rawStr)) !== null) {
+        const key = UNIT_MAP[m[1]];
+        if (key) found.add(key);
+    }
+
+    // ── 3: section-number prefix  e.g. "4.1", "5.12", "6.3"
+    const secRegex = /\b([4-6])\.\d+/g;
+    while ((m = secRegex.exec(text)) !== null) {
+        const map = {'4':'U4','5':'U5','6':'U6'};
+        if (map[m[1]]) found.add(map[m[1]]);
+    }
+
+    // ── 4: keyword match against each unit's topic titles
+    //       Only fires when the topic/section string itself has no unit tags
+    if (found.size === 0) {
+        Object.entries(DEMO_TOPICS).forEach(([unitName, secs]) => {
+            const shortKey = UNIT_MAP[unitName.replace('UNIT ','').trim()] || null;
+            if (!shortKey) return;
+            Object.values(secs).forEach(title => {
+                const fw = title.toLowerCase().split(' ')[0];
+                if (fw.length > 4 && text.includes(fw)) found.add(shortKey);
+                if (text.includes(title.toLowerCase()))  found.add(shortKey);
+            });
+        });
+    }
+
+    // ── 5: nothing matched → return empty (attempt is unit-agnostic / unknown)
+    return [...found];
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   buildState(data)
+   For every quiz attempt we credit its score to EVERY resolved unit so that
+   a cross-unit quiz shows up in all relevant unit panels, heatmaps, etc.
+───────────────────────────────────────────────────────────────────────────── */
 function buildState(data){
-    ALL_QUIZ=data;
-    SECTIONS.forEach(s=>{TOPIC_DATA[s]={easy:{a:0,s:0,t:0},medium:{a:0,s:0,t:0},hard:{a:0,s:0,t:0}};});
-    Object.keys(DEMO_TOPICS).forEach(u=>{SECTION_DATA[u]={};Object.keys(DEMO_TOPICS[u]).forEach(sec=>{SECTION_DATA[u][sec]={attempts:0,score:0,total:0};});});
-    data.forEach(q=>{
-        const diff=(q.difficulty||'').toLowerCase();
-        const roman=(q.topic||'').toUpperCase().match(/UNIT\s+(VI|IV|V|III|II|I)/)?.[1];
-        if(roman){const u=UNIT_MAP[roman];if(u&&TOPIC_DATA[u]?.[diff]){TOPIC_DATA[u][diff].a++;TOPIC_DATA[u][diff].s+=parseInt(q.score)||0;TOPIC_DATA[u][diff].t+=parseInt(q.total)||0;}}
-        Object.entries(DEMO_TOPICS).forEach(([unit,secs])=>{Object.entries(secs).forEach(([sec,title])=>{const tl=(q.topic||'').toLowerCase(),ttl=title.toLowerCase(),fw=ttl.split(' ')[0];if(tl.includes(ttl)||tl.includes(sec)||(fw.length>4&&tl.includes(fw))){SECTION_DATA[unit][sec].attempts++;SECTION_DATA[unit][sec].score+=parseInt(q.score)||0;SECTION_DATA[unit][sec].total+=parseInt(q.total)||0;}});});
-        if(q.timecreated&&parseInt(q.total||0)>0)TREND_DATA.push({ts:parseInt(q.timecreated),pct:Math.round((parseInt(q.score)||0)/(parseInt(q.total)||1)*100)});
+    ALL_QUIZ = data;
+
+    // Initialise per-unit difficulty buckets
+    SECTIONS.forEach(s => {
+        TOPIC_DATA[s] = { easy:{a:0,s:0,t:0}, medium:{a:0,s:0,t:0}, hard:{a:0,s:0,t:0} };
     });
-    TREND_DATA.sort((a,b)=>a.ts-b.ts);
+
+    // Initialise per-section accumulators
+    Object.keys(DEMO_TOPICS).forEach(u => {
+        SECTION_DATA[u] = {};
+        Object.keys(DEMO_TOPICS[u]).forEach(sec => {
+            SECTION_DATA[u][sec] = { attempts:0, score:0, total:0 };
+        });
+    });
+
+    data.forEach(q => {
+        const diff  = (q.difficulty || '').toLowerCase();
+        const score = parseInt(q.score)  || 0;
+        const total = parseInt(q.total)  || 0;
+
+        // ── Credit TOPIC_DATA for every resolved unit ──────────────────────
+        const units = resolveUnits(q);
+        units.forEach(u => {
+            if (TOPIC_DATA[u]?.[diff]) {
+                TOPIC_DATA[u][diff].a++;
+                TOPIC_DATA[u][diff].s += score;
+                TOPIC_DATA[u][diff].t += total;
+            }
+        });
+
+        // ── Credit SECTION_DATA: match against every topic title ───────────
+        // This already checks all units/sections independently, so a quiz
+        // whose topic text matches titles in multiple units will naturally
+        // land in all of them — no change needed here, but kept explicit.
+        Object.entries(DEMO_TOPICS).forEach(([unit, secs]) => {
+            Object.entries(secs).forEach(([sec, title]) => {
+                const tl  = (q.topic || '').toLowerCase();
+                const ttl = title.toLowerCase();
+                const fw  = ttl.split(' ')[0];
+                if (tl.includes(ttl) || tl.includes(sec) || (fw.length > 4 && tl.includes(fw))) {
+                    SECTION_DATA[unit][sec].attempts++;
+                    SECTION_DATA[unit][sec].score += score;
+                    SECTION_DATA[unit][sec].total += total;
+                }
+            });
+        });
+
+        // ── Trend data (unchanged) ─────────────────────────────────────────
+        if (q.timecreated && total > 0) {
+            TREND_DATA.push({
+                ts:  parseInt(q.timecreated),
+                pct: Math.round(score / total * 100)
+            });
+        }
+    });
+
+    TREND_DATA.sort((a, b) => a.ts - b.ts);
 }
 
 function buildFlat(){
@@ -698,7 +800,10 @@ function renderAttemptLog(){
     if(!ALL_QUIZ.length){document.getElementById('attemptLog').innerHTML=`<p style="font-size:11px;color:var(--hint);padding:10px 0">No attempts yet.</p>`;return;}
     document.getElementById('attemptLog').innerHTML=[...ALL_QUIZ].sort((a,b)=>(parseInt(b.timecreated)||0)-(parseInt(a.timecreated)||0)).map(q=>{
         const sc=parseInt(q.score)||0,tot=parseInt(q.total)||0,pct=tot>0?Math.round(sc/tot*100):0;
-        return `<div class="ag ag-row"><span style="font-size:11px">${q.topic||'—'}</span><span style="font-size:10px;color:var(--muted);font-family:var(--mono)">${q.unit||'—'}</span><span>${diffBadge(q.difficulty)}</span><span class="score-pill ${scorePillCls(sc,tot)}">${sc}/${tot}</span><span style="font-family:var(--mono);font-size:11px;color:${statusOf(pct).color}">${pct}%</span></div>`;
+        // Show all resolved units for cross-unit quizzes
+        const resolvedUnits = resolveUnits(q);
+        const unitDisplay = resolvedUnits.length > 0 ? resolvedUnits.join(', ') : (q.unit || '—');
+        return `<div class="ag ag-row"><span style="font-size:11px">${q.topic||'—'}</span><span style="font-size:10px;color:var(--muted);font-family:var(--mono)">${unitDisplay}</span><span>${diffBadge(q.difficulty)}</span><span class="score-pill ${scorePillCls(sc,tot)}">${sc}/${tot}</span><span style="font-family:var(--mono);font-size:11px;color:${statusOf(pct).color}">${pct}%</span></div>`;
     }).join('');
 }
 
