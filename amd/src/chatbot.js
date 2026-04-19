@@ -811,6 +811,32 @@ define([
     // helper to pick student/teacher flow after template is present
     function activateModeAfterRender(config) {
 
+        //BUTTON HIDING
+        const allowedCourseId = parseInt(config.democourseid); // 21
+        const currentCourseId = parseInt(config.currentcourseid);
+
+        const allowedPages = [
+            '/local/automation/analytics_overview.php',
+            '/local/automation/analytics_student.php',
+            '/local/automation/chat.php',
+            '/local/automation/student_dashboard.php',
+            '/local/automation/student_quiz_attempt.php',
+            '/local/automation/student_quiz.php'
+        ];
+
+        // Get current page path
+        const currentPath = window.location.pathname;
+
+        // Check if current page is allowed
+        const isAllowedPage = allowedPages.some(page => currentPath.includes(page));
+
+        // FINAL CONDITION
+        if (currentCourseId !== allowedCourseId && !isAllowedPage) {
+            $('#ai-chatbot-button').hide();
+            $('#ai-chatbot-modal').hide(); // optional safety
+            return;
+        }
+
         if (config && config.role === 'student') {
             console.log("INSIDE STUDENT BLOCK", config);
 
@@ -842,10 +868,10 @@ define([
             });
 
             // If outside demo course → disable button
-            if (parseInt(config.currentcourseid) !== parseInt(config.democourseid)) {
-                $('#ai-chatbot-button').off('click');
-                return;
-            }
+            // if (parseInt(config.currentcourseid) !== parseInt(config.democourseid)) {
+            //     $('#ai-chatbot-button').off('click');
+            //     return;
+            // }
 
             currentMode = 'student';
             $('.chat-tabs').hide();
