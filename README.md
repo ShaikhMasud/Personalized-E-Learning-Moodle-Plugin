@@ -2,7 +2,10 @@
 
 A Moodle plugin that provides personalized learning experiences by adapting course content, recommendations, and pacing to individual learners based on their profile, activity, and assessment data.
 
-> NOTE: This README is a thorough template. Replace placeholders (like Moodle/PHP versions, plugin location, screenshots) with details specific to this repository before publishing.
+<img width="1600" height="900" alt="Screenshot 2026-04-19 155813" src="https://github.com/user-attachments/assets/3f38fbe6-883e-40ab-b720-d9be0885e648" />
+<img width="1600" height="852" alt="Screenshot 2026-04-29 195655" src="https://github.com/user-attachments/assets/825e813e-5cc9-4741-be70-5fddaa8ef438" />
+<img width="1600" height="900" alt="Screenshot 2026-04-29 193222" src="https://github.com/user-attachments/assets/396b5262-8624-4a37-8f37-7ff509c096b1" />
+
 
 ## Table of contents
 
